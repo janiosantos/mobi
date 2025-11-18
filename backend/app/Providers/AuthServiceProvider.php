@@ -8,12 +8,16 @@ use App\Models\Ride;
 use App\Models\User;
 use App\Models\DriverProfile;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
+use App\Models\Vehicle;
+use App\Models\Message;
 use App\Models\Rating;
 use App\Policies\RidePolicy;
 use App\Policies\UserPolicy;
 use App\Policies\DriverProfilePolicy;
-use App\Policies\PaymentPolicy;
-use App\Policies\RatingPolicy;
+use App\Policies\PaymentMethodPolicy;
+use App\Policies\VehiclePolicy;
+use App\Policies\MessagePolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -26,8 +30,9 @@ class AuthServiceProvider extends ServiceProvider
         Ride::class => RidePolicy::class,
         User::class => UserPolicy::class,
         DriverProfile::class => DriverProfilePolicy::class,
-        Payment::class => PaymentPolicy::class,
-        Rating::class => RatingPolicy::class,
+        PaymentMethod::class => PaymentMethodPolicy::class,
+        Vehicle::class => VehiclePolicy::class,
+        Message::class => MessagePolicy::class,
     ];
 
     /**
