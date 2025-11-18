@@ -125,7 +125,7 @@ class RideService
     /**
      * Driver accepts a ride
      */
-    public function acceptRide(Ride $ride, User $driver): Ride
+    public function acceptRide(Ride $ride, User $driver, $vehicle): Ride
     {
         if ($ride->driver_id) {
             throw new \Exception('This ride has already been accepted by another driver.');
@@ -133,12 +133,6 @@ class RideService
 
         if (!$driver->driverProfile->canAcceptRides()) {
             throw new \Exception('Driver is not able to accept rides at this moment.');
-        }
-
-        $vehicle = $driver->driverProfile->primaryVehicle();
-
-        if (!$vehicle) {
-            throw new \Exception('Driver does not have an active vehicle.');
         }
 
         return DB::transaction(function () use ($ride, $driver, $vehicle) {
@@ -149,7 +143,7 @@ class RideService
             $driver->driverProfile->update(['is_available' => false]);
 
             // Reload ride
-            $ride = $ride->fresh();
+            $ride = $ride->fresh(['driver', 'vehicle', 'passenger', 'category']);
 
             // Dispatch event
             event(new RideAccepted($ride));
@@ -166,7 +160,7 @@ class RideService
     /**
      * Driver arrives at pickup location
      */
-    public function arriveAtPickup(Ride $ride): Ride
+    public function driverArrived(Ride $ride): Ride
     {
         if ($ride->status !== 'accepted') {
             throw new \Exception('Invalid ride status for arrival.');
@@ -202,13 +196,17 @@ class RideService
     /**
      * Complete the ride
      */
-    public function completeRide(Ride $ride, float $actualDistanceKm, int $actualDurationMinutes): Ride
+    public function completeRide(Ride $ride, ?float $actualDistanceKm = null, ?int $actualDurationMinutes = null): Ride
     {
         if ($ride->status !== 'in_progress') {
             throw new \Exception('Ride is not in progress.');
         }
 
         return DB::transaction(function () use ($ride, $actualDistanceKm, $actualDurationMinutes) {
+            // Use estimated values if actual values not provided
+            $actualDistanceKm = $actualDistanceKm ?? ($ride->estimated_distance_meters / 1000);
+            $actualDurationMinutes = $actualDurationMinutes ?? ($ride->estimated_duration_seconds / 60);
+
             // Calculate final price based on actual distance/time
             $category = $ride->category;
             $actualDistanceMeters = $actualDistanceKm * 1000;
@@ -227,8 +225,8 @@ class RideService
             $ride->update([
                 'status' => 'completed',
                 'completed_at' => now(),
-                'actual_distance' => $actualDistanceKm,
-                'actual_duration' => $actualDurationMinutes,
+                'actual_distance_meters' => $actualDistanceMeters,
+                'actual_duration_seconds' => $actualDurationSeconds,
                 'final_price' => $finalPricing['total'],
                 'platform_fee' => $finalPricing['platform_fee'],
                 'driver_earnings' => $finalPricing['driver_earnings'],
@@ -251,20 +249,19 @@ class RideService
     /**
      * Cancel a ride
      */
-    public function cancelRide(Ride $ride, User $user, string $reason): Ride
+    public function cancelRide(Ride $ride, string $cancelledBy, string $reason): Ride
     {
         if (!$ride->canBeCancelled()) {
             throw new \Exception('This ride cannot be cancelled.');
         }
 
-        return DB::transaction(function () use ($ride, $user, $reason) {
-            $cancelledBy = $user->id === $ride->passenger_id ? 'passenger' : 'driver';
+        return DB::transaction(function () use ($ride, $cancelledBy, $reason) {
             $status = $cancelledBy === 'passenger' ? 'cancelled_by_passenger' : 'cancelled_by_driver';
 
             // Calculate cancellation fee if applicable
             $cancellationFee = 0;
             if ($ride->status === 'accepted' || $ride->status === 'driver_arrived') {
-                $cancellationFee = config('mobi.ride.cancel_penalty');
+                $cancellationFee = config('mobi.ride.cancellation_fee', 5.00);
             }
 
             $ride->update([
@@ -278,6 +275,12 @@ class RideService
             // If driver was assigned, make them available again
             if ($ride->driver_id) {
                 $ride->driver->driverProfile->update(['is_available' => true]);
+            }
+
+            // Update driver cancellation stats if driver cancelled
+            if ($cancelledBy === 'driver' && $ride->driver) {
+                $ride->driver->driverProfile->increment('cancelled_rides');
+                $this->updateDriverStats($ride->driver->driverProfile);
             }
 
             event(new RideCancelled($ride));
