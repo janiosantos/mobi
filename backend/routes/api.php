@@ -99,6 +99,23 @@ Route::prefix('v1')->group(function () {
             Route::get('/my-rides/passenger', [\App\Http\Controllers\SharedRideController::class, 'myRidesAsPassenger']);
         });
 
+        // Saved Places / Favorites
+        Route::prefix('saved-places')->group(function () {
+            Route::get('/', [\App\Http\Controllers\SavedPlaceController::class, 'index']);
+            Route::post('/', [\App\Http\Controllers\SavedPlaceController::class, 'store']);
+            Route::get('/type/{type}', [\App\Http\Controllers\SavedPlaceController::class, 'byType']);
+            Route::get('/{savedPlace}', [\App\Http\Controllers\SavedPlaceController::class, 'show']);
+            Route::put('/{savedPlace}', [\App\Http\Controllers\SavedPlaceController::class, 'update']);
+            Route::delete('/{savedPlace}', [\App\Http\Controllers\SavedPlaceController::class, 'destroy']);
+            Route::post('/{savedPlace}/set-default', [\App\Http\Controllers\SavedPlaceController::class, 'setAsDefault']);
+        });
+
+        // Tips
+        Route::prefix('rides/{ride}/tip')->group(function () {
+            Route::post('/', [\App\Http\Controllers\TipController::class, 'addTip']);
+            Route::get('/suggestions', [\App\Http\Controllers\TipController::class, 'getSuggestions']);
+        });
+
         /*
         |--------------------------------------------------------------------------
         | Passenger Routes

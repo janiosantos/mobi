@@ -8,6 +8,7 @@ export 'src/models/payment.dart';
 export 'src/models/location.dart';
 export 'src/models/chat_message.dart';
 export 'src/models/shared_ride.dart';
+export 'src/models/saved_place.dart';
 
 // Services
 export 'src/services/api_service.dart';
@@ -22,6 +23,7 @@ export 'src/repositories/auth_repository.dart';
 export 'src/repositories/ride_repository.dart';
 export 'src/repositories/payment_repository.dart';
 export 'src/repositories/shared_ride_repository.dart';
+export 'src/repositories/saved_place_repository.dart';
 
 // Constants
 export 'src/constants/api_constants.dart';
