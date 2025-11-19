@@ -3,6 +3,7 @@ library mobi_core;
 // Models
 export 'src/models/user.dart';
 export 'src/models/ride.dart';
+export 'src/models/ride_stop.dart';
 export 'src/models/vehicle.dart';
 export 'src/models/payment.dart';
 export 'src/models/location.dart';

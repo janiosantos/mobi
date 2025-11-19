@@ -1,4 +1,5 @@
 import '../models/ride.dart';
+import '../models/ride_stop.dart';
 import '../services/api_service.dart';
 
 class RideRepository {
@@ -158,6 +159,114 @@ class RideRepository {
       return {'success': true, 'data': response.data};
     } catch (e) {
       return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Multiple Stops Management
+  |--------------------------------------------------------------------------
+  */
+
+  /// Get all stops for a ride
+  Future<List<RideStop>> getRideStops(int rideId) async {
+    try {
+      final response = await _apiService.get('/rides/$rideId/stops');
+      final List<dynamic> data = response.data['data'];
+      return data.map((json) => RideStop.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Failed to get ride stops: $e');
+    }
+  }
+
+  /// Add a stop to a ride
+  Future<RideStop> addRideStop({
+    required int rideId,
+    required String address,
+    required double latitude,
+    required double longitude,
+    int waitTimeMinutes = 3,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        '/rides/$rideId/stops',
+        data: {
+          'address': address,
+          'latitude': latitude,
+          'longitude': longitude,
+          'wait_time_minutes': waitTimeMinutes,
+        },
+      );
+
+      return RideStop.fromJson(response.data['data']);
+    } catch (e) {
+      throw Exception('Failed to add ride stop: $e');
+    }
+  }
+
+  /// Update a ride stop
+  Future<RideStop> updateRideStop({
+    required int rideId,
+    required int stopId,
+    String? address,
+    double? latitude,
+    double? longitude,
+    int? waitTimeMinutes,
+  }) async {
+    try {
+      final Map<String, dynamic> data = {};
+
+      if (address != null) data['address'] = address;
+      if (latitude != null) data['latitude'] = latitude;
+      if (longitude != null) data['longitude'] = longitude;
+      if (waitTimeMinutes != null) data['wait_time_minutes'] = waitTimeMinutes;
+
+      final response = await _apiService.put(
+        '/rides/$rideId/stops/$stopId',
+        data: data,
+      );
+
+      return RideStop.fromJson(response.data['data']);
+    } catch (e) {
+      throw Exception('Failed to update ride stop: $e');
+    }
+  }
+
+  /// Remove a stop from a ride
+  Future<void> removeRideStop({
+    required int rideId,
+    required int stopId,
+  }) async {
+    try {
+      await _apiService.delete('/rides/$rideId/stops/$stopId');
+    } catch (e) {
+      throw Exception('Failed to remove ride stop: $e');
+    }
+  }
+
+  /// Mark driver arrival at a stop
+  Future<RideStop> arriveAtStop({
+    required int rideId,
+    required int stopId,
+  }) async {
+    try {
+      final response = await _apiService.post('/rides/$rideId/stops/$stopId/arrive');
+      return RideStop.fromJson(response.data['data']);
+    } catch (e) {
+      throw Exception('Failed to mark arrival at stop: $e');
+    }
+  }
+
+  /// Mark driver departure from a stop
+  Future<RideStop> departFromStop({
+    required int rideId,
+    required int stopId,
+  }) async {
+    try {
+      final response = await _apiService.post('/rides/$rideId/stops/$stopId/depart');
+      return RideStop.fromJson(response.data['data']);
+    } catch (e) {
+      throw Exception('Failed to mark departure from stop: $e');
     }
   }
 }
