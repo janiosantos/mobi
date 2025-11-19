@@ -204,6 +204,27 @@ Route::prefix('v1')->group(function () {
 
         /*
         |--------------------------------------------------------------------------
+        | Gamification Routes (Shared)
+        |--------------------------------------------------------------------------
+        */
+        Route::prefix('gamification')->group(function () {
+            // User Profile & Stats
+            Route::get('/profile', [\App\Http\Controllers\Api\V1\GamificationController::class, 'profile']);
+            Route::get('/stats', [\App\Http\Controllers\Api\V1\GamificationController::class, 'stats']);
+
+            // Badges
+            Route::get('/badges', [\App\Http\Controllers\Api\V1\GamificationController::class, 'badges']);
+
+            // Achievements
+            Route::get('/achievements', [\App\Http\Controllers\Api\V1\GamificationController::class, 'achievements']);
+            Route::post('/achievements/check', [\App\Http\Controllers\Api\V1\GamificationController::class, 'checkProgress']);
+
+            // Leaderboard
+            Route::get('/leaderboard', [\App\Http\Controllers\Api\V1\GamificationController::class, 'leaderboard']);
+        });
+
+        /*
+        |--------------------------------------------------------------------------
         | Passenger Routes
         |--------------------------------------------------------------------------
         */

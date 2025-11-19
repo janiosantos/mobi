@@ -236,6 +236,70 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(User::class, 'referred_by');
     }
 
+    /**
+     * User statistics (gamification)
+     */
+    public function stats()
+    {
+        return $this->hasOne(UserStats::class);
+    }
+
+    /**
+     * User achievements
+     */
+    public function achievements()
+    {
+        return $this->hasMany(UserAchievement::class);
+    }
+
+    /**
+     * User badges
+     */
+    public function badges()
+    {
+        return $this->belongsToMany(Badge::class, 'user_badges')
+            ->withTimestamps()
+            ->withPivot('earned_at');
+    }
+
+    /**
+     * All rides (as passenger or driver)
+     */
+    public function rides()
+    {
+        if ($this->isPassenger()) {
+            return $this->ridesAsPassenger();
+        }
+
+        if ($this->isDriver()) {
+            return $this->ridesAsDriver();
+        }
+
+        return $this->ridesAsPassenger();
+    }
+
+    /**
+     * Check if user leveled up and update stats
+     */
+    public function checkLevelUp(): void
+    {
+        $stats = $this->stats;
+        if (!$stats) return;
+
+        $currentLevel = $stats->level;
+        $newLevel = UserStats::getLevelFromXp($stats->total_xp);
+
+        if ($newLevel > $currentLevel) {
+            $stats->level = $newLevel;
+            $stats->current_xp = $stats->total_xp - UserStats::calculateXpForLevel($newLevel);
+            $stats->xp_to_next_level = UserStats::calculateXpForLevel($newLevel + 1);
+            $stats->save();
+
+            // Fire level up event
+            event(new \App\Events\UserLeveledUp($this, $newLevel));
+        }
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors & Mutators
