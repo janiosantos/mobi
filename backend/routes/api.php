@@ -116,6 +116,21 @@ Route::prefix('v1')->group(function () {
             Route::get('/suggestions', [\App\Http\Controllers\TipController::class, 'getSuggestions']);
         });
 
+        // Emergency Contacts
+        Route::prefix('emergency-contacts')->group(function () {
+            Route::get('/', [\App\Http\Controllers\EmergencyContactController::class, 'index']);
+            Route::post('/', [\App\Http\Controllers\EmergencyContactController::class, 'store']);
+            Route::put('/{contact}', [\App\Http\Controllers\EmergencyContactController::class, 'update']);
+            Route::delete('/{contact}', [\App\Http\Controllers\EmergencyContactController::class, 'destroy']);
+        });
+
+        // Safety Features
+        Route::prefix('rides/{ride}')->group(function () {
+            Route::post('/share', [\App\Http\Controllers\SafetyController::class, 'shareTrip']);
+            Route::post('/sos', [\App\Http\Controllers\SafetyController::class, 'triggerSOS']);
+            Route::delete('/sos', [\App\Http\Controllers\SafetyController::class, 'cancelSOS']);
+        });
+
         /*
         |--------------------------------------------------------------------------
         | Passenger Routes
@@ -229,6 +244,14 @@ Route::prefix('v1')->group(function () {
             });
         });
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Public Routes
+    |--------------------------------------------------------------------------
+    */
+    // Shared Trip View (Public - no auth required)
+    Route::get('/shared-trip/{code}', [\App\Http\Controllers\SafetyController::class, 'getSharedTrip']);
 
     /*
     |--------------------------------------------------------------------------

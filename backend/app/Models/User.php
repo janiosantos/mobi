@@ -188,6 +188,22 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(CouponUsage::class);
     }
 
+    /**
+     * Saved places (favorites, home, work)
+     */
+    public function savedPlaces()
+    {
+        return $this->hasMany(SavedPlace::class);
+    }
+
+    /**
+     * Emergency contacts
+     */
+    public function emergencyContacts()
+    {
+        return $this->hasMany(EmergencyContact::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors & Mutators
