@@ -16,6 +16,7 @@ export 'src/models/shared_trip_info.dart';
 export 'src/models/scheduled_ride.dart';
 export 'src/models/ride_split_payment.dart';
 export 'src/models/referral.dart';
+export 'src/models/report.dart';
 
 // Services
 export 'src/services/api_service.dart';
@@ -36,6 +37,7 @@ export 'src/repositories/vehicle_category_repository.dart';
 export 'src/repositories/scheduled_ride_repository.dart';
 export 'src/repositories/split_fare_repository.dart';
 export 'src/repositories/referral_repository.dart';
+export 'src/repositories/report_repository.dart';
 
 // Constants
 export 'src/constants/api_constants.dart';
