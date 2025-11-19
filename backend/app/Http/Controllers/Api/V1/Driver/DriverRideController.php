@@ -43,21 +43,32 @@ class DriverRideController extends Controller
 
             $radius = $request->input('radius', 5); // km
 
+            // Eager load vehicle to avoid N+1
+            $vehicle = $driverProfile->vehicles()->where('is_active', true)->first();
+            if (!$vehicle) {
+                return response()->json([
+                    'message' => 'Você precisa ter um veículo ativo.',
+                ], 400);
+            }
+
+            // Use raw SQL with haversine formula to filter by radius in database
+            $lat = $driverProfile->current_latitude;
+            $lng = $driverProfile->current_longitude;
+
             $availableRides = Ride::where('status', 'searching')
-                ->where('vehicle_category_id', $driverProfile->vehicles()->first()?->vehicle_category_id)
+                ->where('vehicle_category_id', $vehicle->vehicle_category_id)
                 ->whereNull('driver_id')
-                ->with(['passenger', 'category'])
-                ->get()
-                ->filter(function ($ride) use ($driverProfile, $radius) {
-                    $distance = $this->calculateDistance(
-                        $driverProfile->current_latitude,
-                        $driverProfile->current_longitude,
-                        $ride->pickup_latitude,
-                        $ride->pickup_longitude
-                    );
-                    return $distance <= $radius;
-                })
-                ->values();
+                ->whereRaw("
+                    (6371 * acos(cos(radians(?))
+                    * cos(radians(pickup_latitude))
+                    * cos(radians(pickup_longitude) - radians(?))
+                    + sin(radians(?))
+                    * sin(radians(pickup_latitude)))) <= ?
+                ", [$lat, $lng, $lat, $radius])
+                ->with(['passenger:id,name,phone,average_rating', 'category:id,name,image'])
+                ->orderBy('created_at', 'desc')
+                ->limit(20)
+                ->get();
 
             return response()->json([
                 'data' => RideResource::collection($availableRides),
