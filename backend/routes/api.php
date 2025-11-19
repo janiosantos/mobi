@@ -13,7 +13,6 @@ use App\Http\Controllers\Api\V1\Driver\DocumentController;
 use App\Http\Controllers\Api\V1\Driver\EarningController;
 use App\Http\Controllers\Api\V1\Driver\LocationController;
 use App\Http\Controllers\Api\V1\Driver\RatingController as DriverRatingController;
-use App\Http\Controllers\Api\V1\ChatController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\ProfileController;
 

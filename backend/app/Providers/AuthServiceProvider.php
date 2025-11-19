@@ -10,14 +10,12 @@ use App\Models\DriverProfile;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Vehicle;
-use App\Models\Message;
 use App\Models\Rating;
 use App\Policies\RidePolicy;
 use App\Policies\UserPolicy;
 use App\Policies\DriverProfilePolicy;
 use App\Policies\PaymentMethodPolicy;
 use App\Policies\VehiclePolicy;
-use App\Policies\MessagePolicy;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -32,7 +30,6 @@ class AuthServiceProvider extends ServiceProvider
         DriverProfile::class => DriverProfilePolicy::class,
         PaymentMethod::class => PaymentMethodPolicy::class,
         Vehicle::class => VehiclePolicy::class,
-        Message::class => MessagePolicy::class,
     ];
 
     /**
