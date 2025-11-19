@@ -158,6 +158,17 @@ Route::prefix('v1')->group(function () {
             Route::post('/{ride}/cancel', [\App\Http\Controllers\ScheduledRideController::class, 'cancel']);
         });
 
+        // Split Fare (Split Payment)
+        Route::prefix('split-fare')->group(function () {
+            Route::post('/rides/{ride}', [\App\Http\Controllers\SplitFareController::class, 'create']);
+            Route::get('/rides/{ride}', [\App\Http\Controllers\SplitFareController::class, 'index']);
+            Route::get('/invitations', [\App\Http\Controllers\SplitFareController::class, 'myInvitations']);
+            Route::get('/{inviteCode}', [\App\Http\Controllers\SplitFareController::class, 'show']);
+            Route::post('/{inviteCode}/accept', [\App\Http\Controllers\SplitFareController::class, 'accept']);
+            Route::post('/{inviteCode}/decline', [\App\Http\Controllers\SplitFareController::class, 'decline']);
+            Route::post('/{inviteCode}/pay', [\App\Http\Controllers\SplitFareController::class, 'pay']);
+        });
+
         /*
         |--------------------------------------------------------------------------
         | Passenger Routes

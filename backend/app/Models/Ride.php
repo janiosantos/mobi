@@ -69,6 +69,9 @@ class Ride extends Model
         'payment_status',
         'payment_method',
         'payment_id',
+        'is_split_payment',
+        'split_count',
+        'split_method',
         'passenger_notes',
         'waiting_time',
         'metadata',
@@ -99,6 +102,8 @@ class Ride extends Model
             'scheduled_at' => 'datetime',
             'scheduled_pickup_window_start' => 'datetime',
             'scheduled_pickup_window_end' => 'datetime',
+            'is_split_payment' => 'boolean',
+            'split_count' => 'integer',
             'requested_at' => 'datetime',
             'accepted_at' => 'datetime',
             'driver_arrived_at' => 'datetime',
@@ -181,6 +186,11 @@ class Ride extends Model
     public function stops()
     {
         return $this->hasMany(RideStop::class)->orderBy('stop_number');
+    }
+
+    public function splitPayments()
+    {
+        return $this->hasMany(RideSplitPayment::class);
     }
 
     /*
