@@ -52,6 +52,11 @@ class Ride extends Model
         'platform_fee',
         'driver_earnings',
         'status',
+        'is_scheduled',
+        'scheduled_at',
+        'scheduled_pickup_window_start',
+        'scheduled_pickup_window_end',
+        'scheduled_status',
         'requested_at',
         'accepted_at',
         'driver_arrived_at',
@@ -90,6 +95,10 @@ class Ride extends Model
             'platform_fee' => 'decimal:2',
             'driver_earnings' => 'decimal:2',
             'cancellation_fee' => 'decimal:2',
+            'is_scheduled' => 'boolean',
+            'scheduled_at' => 'datetime',
+            'scheduled_pickup_window_start' => 'datetime',
+            'scheduled_pickup_window_end' => 'datetime',
             'requested_at' => 'datetime',
             'accepted_at' => 'datetime',
             'driver_arrived_at' => 'datetime',
@@ -237,6 +246,35 @@ class Ride extends Model
         return $this->started_at->diffInMinutes($this->completed_at);
     }
 
+    public function isScheduledRide(): bool
+    {
+        return $this->is_scheduled === true;
+    }
+
+    public function isWithinPickupWindow(): bool
+    {
+        if (!$this->isScheduledRide() || !$this->scheduled_pickup_window_start || !$this->scheduled_pickup_window_end) {
+            return false;
+        }
+
+        $now = now();
+        return $now->between($this->scheduled_pickup_window_start, $this->scheduled_pickup_window_end);
+    }
+
+    public function canBeScheduled(): bool
+    {
+        // Rides can be scheduled up to 30 days in advance and at least 30 minutes in the future
+        if (!$this->scheduled_at) {
+            return false;
+        }
+
+        $now = now();
+        $minScheduleTime = $now->copy()->addMinutes(30);
+        $maxScheduleTime = $now->copy()->addDays(30);
+
+        return $this->scheduled_at->between($minScheduleTime, $maxScheduleTime);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes
@@ -277,5 +315,24 @@ class Ride extends Model
     {
         return $query->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year);
+    }
+
+    public function scopeScheduled($query)
+    {
+        return $query->where('is_scheduled', true);
+    }
+
+    public function scopePendingScheduled($query)
+    {
+        return $query->where('is_scheduled', true)
+            ->where('scheduled_status', 'pending')
+            ->where('scheduled_at', '>', now());
+    }
+
+    public function scopeUpcoming($query)
+    {
+        return $query->where('is_scheduled', true)
+            ->where('scheduled_at', '>', now())
+            ->orderBy('scheduled_at', 'asc');
     }
 }

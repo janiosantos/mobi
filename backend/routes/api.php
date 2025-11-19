@@ -149,6 +149,15 @@ Route::prefix('v1')->group(function () {
             Route::post('/compare-price', [\App\Http\Controllers\VehicleCategoryController::class, 'comparePrice']);
         });
 
+        // Scheduled Rides
+        Route::prefix('scheduled-rides')->group(function () {
+            Route::post('/', [\App\Http\Controllers\ScheduledRideController::class, 'schedule']);
+            Route::get('/', [\App\Http\Controllers\ScheduledRideController::class, 'index']);
+            Route::get('/upcoming', [\App\Http\Controllers\ScheduledRideController::class, 'upcoming']);
+            Route::put('/{ride}', [\App\Http\Controllers\ScheduledRideController::class, 'update']);
+            Route::post('/{ride}/cancel', [\App\Http\Controllers\ScheduledRideController::class, 'cancel']);
+        });
+
         /*
         |--------------------------------------------------------------------------
         | Passenger Routes
