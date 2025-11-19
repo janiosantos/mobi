@@ -6,8 +6,9 @@ use App\Models\Referral;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Http\Requests\Referral\InviteReferralRequest;
+use App\Http\Requests\Referral\ApplyReferralRequest;
 
 class ReferralController extends Controller
 {
@@ -46,20 +47,8 @@ class ReferralController extends Controller
     /**
      * Send a referral invitation.
      */
-    public function invite(Request $request): JsonResponse
+    public function invite(InviteReferralRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required_without:phone|nullable|email',
-            'phone' => 'required_without:email|nullable|string',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         $user = $request->user();
 
         // Check if already referred this email/phone
@@ -103,19 +92,8 @@ class ReferralController extends Controller
     /**
      * Apply a referral code during registration.
      */
-    public function apply(Request $request): JsonResponse
+    public function apply(ApplyReferralRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'referral_code' => 'required|string|size:8',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         $code = strtoupper($request->input('referral_code'));
 
         // Find referral by code

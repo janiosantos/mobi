@@ -8,33 +8,23 @@ use App\Models\EmergencyContact;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\SOSActivatedNotification;
 use App\Notifications\SOSDeactivatedNotification;
+use App\Http\Requests\SOS\ActivateSOSRequest;
+use App\Http\Requests\SOS\DeactivateSOSRequest;
+use App\Http\Requests\SOS\UpdateSOSLocationRequest;
+use App\Http\Requests\SOS\AlertMonitoringCenterRequest;
+use App\Http\Requests\SOS\ShareSOSLocationRequest;
+use App\Http\Requests\SOS\GetNearestEmergencyServicesRequest;
 
 class SOSController extends Controller
 {
     /**
      * Activate SOS alert
      */
-    public function activate(Request $request): JsonResponse
+    public function activate(ActivateSOSRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'accuracy' => 'nullable|numeric|min:0',
-            'note' => 'nullable|string|max:500',
-            'ride_id' => 'nullable|exists:rides,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         $user = $request->user();
 
         // Check if user already has an active SOS
@@ -82,19 +72,8 @@ class SOSController extends Controller
     /**
      * Deactivate SOS alert
      */
-    public function deactivate(Request $request): JsonResponse
+    public function deactivate(DeactivateSOSRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'resolution' => 'nullable|string|max:500',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         $user = $request->user();
 
         $sosAlert = SOSAlert::where('user_id', $user->id)
@@ -124,21 +103,8 @@ class SOSController extends Controller
     /**
      * Update location during active SOS
      */
-    public function updateLocation(Request $request): JsonResponse
+    public function updateLocation(UpdateSOSLocationRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'accuracy' => 'nullable|numeric|min:0',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         $user = $request->user();
 
         $sosAlert = SOSAlert::where('user_id', $user->id)
@@ -222,20 +188,8 @@ class SOSController extends Controller
     /**
      * Alert monitoring center
      */
-    public function alertMonitoringCenter(Request $request): JsonResponse
+    public function alertMonitoringCenter(AlertMonitoringCenterRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'reason' => 'required|string|max:200',
-            'details' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         $user = $request->user();
 
         $sosAlert = SOSAlert::where('user_id', $user->id)
@@ -300,19 +254,8 @@ class SOSController extends Controller
     /**
      * Share location with specific contact
      */
-    public function shareLocation(Request $request): JsonResponse
+    public function shareLocation(ShareSOSLocationRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'contact_id' => 'required|exists:emergency_contacts,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         $user = $request->user();
 
         $sosAlert = SOSAlert::where('user_id', $user->id)
@@ -361,20 +304,8 @@ class SOSController extends Controller
     /**
      * Get nearest emergency services (police, hospital, etc.)
      */
-    public function getNearestEmergencyServices(Request $request): JsonResponse
+    public function getNearestEmergencyServices(GetNearestEmergencyServicesRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         // TODO: Integrate with Google Places API or similar to find:
         // - Nearest police station
         // - Nearest hospital

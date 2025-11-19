@@ -5,35 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Ride;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Http\Requests\ScheduledRide\ScheduleRideRequest;
+use App\Http\Requests\ScheduledRide\UpdateScheduledRideRequest;
+use App\Http\Requests\ScheduledRide\CancelScheduledRideRequest;
 
 class ScheduledRideController extends Controller
 {
     /**
      * Schedule a new ride.
      */
-    public function schedule(Request $request): JsonResponse
+    public function schedule(ScheduleRideRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'scheduled_at' => 'required|date|after:30 minutes|before:30 days',
-            'vehicle_category_id' => 'required|exists:vehicle_categories,id',
-            'pickup_latitude' => 'required|numeric|between:-90,90',
-            'pickup_longitude' => 'required|numeric|between:-180,180',
-            'pickup_address' => 'required|string',
-            'dropoff_latitude' => 'required|numeric|between:-90,90',
-            'dropoff_longitude' => 'required|numeric|between:-180,180',
-            'dropoff_address' => 'required|string',
-            'passenger_notes' => 'nullable|string|max:500',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
         $scheduledAt = \Carbon\Carbon::parse($request->input('scheduled_at'));
 
         // Create 15-minute pickup window
@@ -103,7 +86,7 @@ class ScheduledRideController extends Controller
     /**
      * Update a scheduled ride.
      */
-    public function update(Request $request, Ride $ride): JsonResponse
+    public function update(UpdateScheduledRideRequest $request, Ride $ride): JsonResponse
     {
         // Verify ownership
         if ($ride->passenger_id !== $request->user()->id) {
@@ -124,24 +107,6 @@ class ScheduledRideController extends Controller
             return response()->json([
                 'message' => 'Cannot update rides scheduled within 30 minutes'
             ], 400);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'scheduled_at' => 'date|after:30 minutes|before:30 days',
-            'pickup_latitude' => 'numeric|between:-90,90',
-            'pickup_longitude' => 'numeric|between:-180,180',
-            'pickup_address' => 'string',
-            'dropoff_latitude' => 'numeric|between:-90,90',
-            'dropoff_longitude' => 'numeric|between:-180,180',
-            'dropoff_address' => 'string',
-            'passenger_notes' => 'nullable|string|max:500',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
         }
 
         $updateData = $request->only([
@@ -173,7 +138,7 @@ class ScheduledRideController extends Controller
     /**
      * Cancel a scheduled ride.
      */
-    public function cancel(Request $request, Ride $ride): JsonResponse
+    public function cancel(CancelScheduledRideRequest $request, Ride $ride): JsonResponse
     {
         // Verify ownership
         if ($ride->passenger_id !== $request->user()->id) {
@@ -187,17 +152,6 @@ class ScheduledRideController extends Controller
             return response()->json([
                 'message' => 'Can only cancel pending or confirmed scheduled rides'
             ], 400);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'reason' => 'nullable|string|max:500',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
         }
 
         $ride->update([

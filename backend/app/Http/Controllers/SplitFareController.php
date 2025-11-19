@@ -7,8 +7,9 @@ use App\Models\RideSplitPayment;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Http\Requests\SplitFare\CreateSplitFareRequest;
+use App\Http\Requests\SplitFare\DeclineSplitFareRequest;
 
 class SplitFareController extends Controller
 {
@@ -17,7 +18,7 @@ class SplitFareController extends Controller
     /**
      * Create a split payment request for a ride.
      */
-    public function create(Request $request, Ride $ride): JsonResponse
+    public function create(CreateSplitFareRequest $request, Ride $ride): JsonResponse
     {
         // Verify ownership (only passenger can create split)
         if ($ride->passenger_id !== $request->user()->id) {
@@ -31,23 +32,6 @@ class SplitFareController extends Controller
             return response()->json([
                 'message' => 'Can only split payment for completed rides'
             ], 400);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'method' => 'required|in:equal,custom,percentage',
-            'participants' => 'required|array|min:1|max:' . (self::MAX_SPLIT_PARTICIPANTS - 1),
-            'participants.*.user_id' => 'nullable|exists:users,id',
-            'participants.*.email' => 'nullable|email',
-            'participants.*.phone' => 'nullable|string',
-            'participants.*.amount' => 'required_if:method,custom|numeric|min:0',
-            'participants.*.percentage' => 'required_if:method,percentage|numeric|min:0|max:100',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
         }
 
         $method = $request->input('method');
@@ -212,7 +196,7 @@ class SplitFareController extends Controller
     /**
      * Decline a split payment invitation.
      */
-    public function decline(Request $request, string $inviteCode): JsonResponse
+    public function decline(DeclineSplitFareRequest $request, string $inviteCode): JsonResponse
     {
         $splitPayment = RideSplitPayment::where('invite_code', $inviteCode)->first();
 
@@ -226,17 +210,6 @@ class SplitFareController extends Controller
             return response()->json([
                 'message' => 'This invitation has already been ' . $splitPayment->status
             ], 400);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'reason' => 'nullable|string|max:500',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
         }
 
         $splitPayment->decline($request->input('reason'));
