@@ -7,6 +7,7 @@ export 'src/models/ride_stop.dart';
 export 'src/models/vehicle.dart';
 export 'src/models/vehicle_category.dart';
 export 'src/models/payment.dart';
+export 'src/models/payment_method.dart';
 export 'src/models/location.dart';
 export 'src/models/chat_message.dart';
 export 'src/models/shared_ride.dart';
@@ -39,6 +40,7 @@ export 'src/repositories/scheduled_ride_repository.dart';
 export 'src/repositories/split_fare_repository.dart';
 export 'src/repositories/referral_repository.dart';
 export 'src/repositories/report_repository.dart';
+export 'src/repositories/chat_repository.dart';
 
 // Constants
 export 'src/constants/api_constants.dart';
@@ -53,6 +55,12 @@ export 'src/theme/app_theme.dart';
 export 'src/bloc/theme/theme_bloc.dart';
 export 'src/bloc/theme/theme_event.dart';
 export 'src/bloc/theme/theme_state.dart';
+
+// BLoCs
+export 'src/bloc/ride/ride_bloc_barrel.dart';
+export 'src/bloc/payment/payment_bloc_barrel.dart';
+export 'src/bloc/chat/chat_bloc_barrel.dart';
+export 'src/bloc/location_tracking/location_tracking_bloc_barrel.dart';
 
 // Payment Gateways
 export 'src/payment/payment_gateway.dart';
