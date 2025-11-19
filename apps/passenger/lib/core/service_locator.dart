@@ -35,6 +35,10 @@ Future<void> setupServiceLocator() async {
   final notificationService = NotificationService();
   getIt.registerSingleton<NotificationService>(notificationService);
 
+  // Theme Service
+  final themeService = ThemeService(sharedPreferences);
+  getIt.registerSingleton<ThemeService>(themeService);
+
   // Repositories
   final authRepository = AuthRepository(authService);
   getIt.registerSingleton<AuthRepository>(authRepository);

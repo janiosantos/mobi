@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobi_core/mobi_core.dart';
 import 'bloc/auth/auth_bloc.dart';
@@ -46,31 +47,47 @@ class MobiDriverApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AuthBloc(
-        authRepository: getIt<AuthRepository>(),
-      )..add(const AppStarted()),
-      child: MaterialApp(
-        title: 'MOBI - Motorista',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: AppConstants.primaryColor,
-          ),
-          useMaterial3: true,
-          fontFamily: AppConstants.fontFamily,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => AuthBloc(
+            authRepository: getIt<AuthRepository>(),
+          )..add(const AppStarted()),
         ),
-        home: BlocBuilder<AuthBloc, AuthState>(
-          builder: (context, state) {
-            if (state is AuthLoading || state is AuthInitial) {
-              return const SplashScreen();
-            } else if (state is Authenticated) {
-              return const HomeScreen();
-            } else {
-              return const LoginScreen();
-            }
-          },
+        BlocProvider(
+          create: (context) => ThemeBloc(
+            themeService: getIt<ThemeService>(),
+          )..add(const LoadTheme()),
         ),
+      ],
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, themeState) {
+          return MaterialApp(
+            title: 'MOBI - Motorista',
+            debugShowCheckedModeBanner: false,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeState.themeMode,
+            home: BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, state) {
+                if (state is AuthLoading || state is AuthInitial) {
+                  return const SplashScreen();
+                } else if (state is Authenticated) {
+                  return const HomeScreen();
+                } else {
+                  return const LoginScreen();
+                }
+              },
+            ),
+          );
+        },
       ),
     );
   }
