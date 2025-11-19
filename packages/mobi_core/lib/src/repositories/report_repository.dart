@@ -24,27 +24,25 @@ class ReportRepository {
     int page = 1,
   }) async {
     try {
-      final queryParams = <String, String>{
-        'page': page.toString(),
+      final queryParams = <String, dynamic>{
+        'page': page,
         if (status != null) 'status': status,
         if (startDate != null) 'start_date': startDate,
         if (endDate != null) 'end_date': endDate,
       };
 
-      final response = await _apiService.get(
-        '/reports/rides',
-        queryParameters: queryParams,
-      );
+      final response = await _apiService.getRideHistory(queryParams);
+      final data = response.data;
 
       // Parse pagination response
       return {
-        'data': (response['data'] as List<dynamic>)
+        'data': (data['data'] as List<dynamic>)
             .map((e) => Ride.fromJson(e as Map<String, dynamic>))
             .toList(),
-        'current_page': response['current_page'] as int,
-        'last_page': response['last_page'] as int,
-        'per_page': response['per_page'] as int,
-        'total': response['total'] as int,
+        'current_page': data['current_page'] as int,
+        'last_page': data['last_page'] as int,
+        'per_page': data['per_page'] as int,
+        'total': data['total'] as int,
       };
     } catch (e) {
       throw Exception('Failed to fetch ride history: $e');
@@ -58,12 +56,10 @@ class ReportRepository {
     ReportPeriod period = ReportPeriod.all,
   }) async {
     try {
-      final response = await _apiService.get(
-        '/reports/spending',
-        queryParameters: {'period': period.value},
-      );
+      final queryParams = {'period': period.value};
+      final response = await _apiService.getSpendingSummary(queryParams);
 
-      return SpendingSummary.fromJson(response);
+      return SpendingSummary.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to fetch spending summary: $e');
     }
@@ -76,12 +72,10 @@ class ReportRepository {
     ReportPeriod period = ReportPeriod.all,
   }) async {
     try {
-      final response = await _apiService.get(
-        '/reports/earnings',
-        queryParameters: {'period': period.value},
-      );
+      final queryParams = {'period': period.value};
+      final response = await _apiService.getEarningsSummary(queryParams);
 
-      return EarningsSummary.fromJson(response);
+      return EarningsSummary.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to fetch earnings summary: $e');
     }
@@ -90,9 +84,9 @@ class ReportRepository {
   /// Get user statistics
   Future<UserStats> getUserStats() async {
     try {
-      final response = await _apiService.get('/reports/stats');
+      final response = await _apiService.getUserStats();
 
-      return UserStats.fromJson(response);
+      return UserStats.fromJson(response.data);
     } catch (e) {
       throw Exception('Failed to fetch user stats: $e');
     }
@@ -108,17 +102,15 @@ class ReportRepository {
     String? endDate,
   }) async {
     try {
-      final queryParams = <String, String>{
+      final queryParams = <String, dynamic>{
         if (startDate != null) 'start_date': startDate,
         if (endDate != null) 'end_date': endDate,
       };
 
-      final response = await _apiService.get(
-        '/reports/export',
-        queryParameters: queryParams,
-      );
+      final response = await _apiService.exportRideHistory(queryParams);
+      final responseData = response.data;
 
-      final data = response['data'] as List<dynamic>;
+      final data = responseData['data'] as List<dynamic>;
       return data.map((row) {
         return (row as List<dynamic>).map((cell) => cell.toString()).toList();
       }).toList();

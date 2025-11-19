@@ -215,4 +215,28 @@ abstract class ApiService {
   Future<HttpResponse<void>> updateDeviceToken(
     @Body() Map<String, dynamic> data,
   );
+
+  // Reports
+  @GET('/reports/rides')
+  Future<HttpResponse<Map<String, dynamic>>> getRideHistory(
+    @Queries() Map<String, dynamic> queries,
+  );
+
+  @GET('/reports/spending')
+  Future<HttpResponse<Map<String, dynamic>>> getSpendingSummary(
+    @Queries() Map<String, dynamic> queries,
+  );
+
+  @GET('/reports/earnings')
+  Future<HttpResponse<Map<String, dynamic>>> getEarningsSummary(
+    @Queries() Map<String, dynamic> queries,
+  );
+
+  @GET('/reports/stats')
+  Future<HttpResponse<Map<String, dynamic>>> getUserStats();
+
+  @GET('/reports/export')
+  Future<HttpResponse<Map<String, dynamic>>> exportRideHistory(
+    @Queries() Map<String, dynamic> queries,
+  );
 }

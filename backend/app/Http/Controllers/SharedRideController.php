@@ -87,7 +87,7 @@ class SharedRideController extends Controller
         $user = $request->user();
 
         // Verify user is a driver
-        if ($user->role !== 'driver') {
+        if ($user->user_type !== 'driver') {
             return response()->json([
                 'message' => 'Only drivers can create shared rides'
             ], 403);

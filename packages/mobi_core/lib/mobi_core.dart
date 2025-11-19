@@ -25,6 +25,7 @@ export 'src/services/location_service.dart';
 export 'src/services/notification_service.dart';
 export 'src/services/theme_service.dart';
 export 'src/services/chat_service.dart';
+export 'src/services/emergency_service.dart';
 
 // Repositories
 export 'src/repositories/auth_repository.dart';
@@ -69,6 +70,9 @@ export 'src/utils/retry_helper.dart';
 export 'src/utils/exception_handler.dart';
 export 'src/utils/page_transitions.dart';
 export 'src/utils/accessibility_helper.dart';
+export 'src/utils/datetime_helper.dart';
+export 'src/utils/money_helper.dart';
+export 'src/utils/network_helper.dart';
 
 // Widgets
 export 'src/widgets/custom_button.dart';
@@ -84,3 +88,4 @@ export 'src/widgets/accessible_icon_button.dart';
 export 'src/widgets/accessible_text_field.dart';
 export 'src/widgets/chat_bubble.dart';
 export 'src/widgets/chat_input.dart';
+export 'src/widgets/sos_button.dart';

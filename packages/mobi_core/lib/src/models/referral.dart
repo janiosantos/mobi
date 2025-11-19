@@ -153,7 +153,7 @@ class Referral extends Equatable {
     return duration.inDays;
   }
 
-  ReferralcopyWith({
+  Referral copyWith({
     int? id,
     int? referrerId,
     int? referredId,

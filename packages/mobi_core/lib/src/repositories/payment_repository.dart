@@ -4,7 +4,7 @@ import '../services/api_service.dart';
 class PaymentRepository {
   final ApiService _apiService;
 
-  PaymentRepository(this _apiService);
+  PaymentRepository(this._apiService);
 
   Future<Map<String, dynamic>> getPayments({
     int page = 1,
