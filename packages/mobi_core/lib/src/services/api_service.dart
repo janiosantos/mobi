@@ -239,4 +239,70 @@ abstract class ApiService {
   Future<HttpResponse<Map<String, dynamic>>> exportRideHistory(
     @Queries() Map<String, dynamic> queries,
   );
+
+  // SOS Emergency
+  @POST('/sos/activate')
+  Future<HttpResponse<Map<String, dynamic>>> activateSOS(
+    @Body() Map<String, dynamic> data,
+  );
+
+  @POST('/sos/deactivate')
+  Future<HttpResponse<Map<String, dynamic>>> deactivateSOS(
+    @Body() Map<String, dynamic> data,
+  );
+
+  @POST('/sos/update-location')
+  Future<HttpResponse<Map<String, dynamic>>> updateSOSLocation(
+    @Body() Map<String, dynamic> data,
+  );
+
+  @POST('/sos/heartbeat')
+  Future<HttpResponse<Map<String, dynamic>>> sendSOSHeartbeat();
+
+  @GET('/sos/tracking-link')
+  Future<HttpResponse<Map<String, dynamic>>> getSOSTrackingLink();
+
+  @POST('/sos/alert-monitoring')
+  Future<HttpResponse<Map<String, dynamic>>> alertMonitoringCenter(
+    @Body() Map<String, dynamic> data,
+  );
+
+  @POST('/sos/start-recording')
+  Future<HttpResponse<Map<String, dynamic>>> startAudioRecording();
+
+  @POST('/sos/share-location')
+  Future<HttpResponse<Map<String, dynamic>>> shareSOSLocation(
+    @Body() Map<String, dynamic> data,
+  );
+
+  @GET('/sos/nearest-services')
+  Future<HttpResponse<Map<String, dynamic>>> getNearestEmergencyServices(
+    @Queries() Map<String, dynamic> query,
+  );
+
+  @GET('/sos/active')
+  Future<HttpResponse<Map<String, dynamic>>> getActiveSOSAlert();
+
+  @GET('/sos/history')
+  Future<HttpResponse<Map<String, dynamic>>> getSOSHistory();
+
+  // Emergency Contacts
+  @GET('/emergency-contacts')
+  Future<HttpResponse<Map<String, dynamic>>> getEmergencyContacts();
+
+  @POST('/emergency-contacts')
+  Future<HttpResponse<Map<String, dynamic>>> createEmergencyContact(
+    @Body() Map<String, dynamic> data,
+  );
+
+  @PUT('/emergency-contacts/{id}')
+  Future<HttpResponse<Map<String, dynamic>>> updateEmergencyContact(
+    @Path('id') int id,
+    @Body() Map<String, dynamic> data,
+  );
+
+  @DELETE('/emergency-contacts/{id}')
+  Future<HttpResponse<void>> deleteEmergencyContact(
+    @Path('id') int id,
+  );
 }

@@ -188,6 +188,21 @@ Route::prefix('v1')->group(function () {
             Route::get('/export', [\App\Http\Controllers\ReportController::class, 'export']);
         });
 
+        // SOS Emergency System
+        Route::prefix('sos')->group(function () {
+            Route::post('/activate', [\App\Http\Controllers\SOSController::class, 'activate']);
+            Route::post('/deactivate', [\App\Http\Controllers\SOSController::class, 'deactivate']);
+            Route::post('/update-location', [\App\Http\Controllers\SOSController::class, 'updateLocation']);
+            Route::post('/heartbeat', [\App\Http\Controllers\SOSController::class, 'heartbeat']);
+            Route::get('/tracking-link', [\App\Http\Controllers\SOSController::class, 'getTrackingLink']);
+            Route::post('/alert-monitoring', [\App\Http\Controllers\SOSController::class, 'alertMonitoringCenter']);
+            Route::post('/start-recording', [\App\Http\Controllers\SOSController::class, 'startAudioRecording']);
+            Route::post('/share-location', [\App\Http\Controllers\SOSController::class, 'shareLocation']);
+            Route::get('/nearest-services', [\App\Http\Controllers\SOSController::class, 'getNearestEmergencyServices']);
+            Route::get('/active', [\App\Http\Controllers\SOSController::class, 'getActive']);
+            Route::get('/history', [\App\Http\Controllers\SOSController::class, 'getHistory']);
+        });
+
         /*
         |--------------------------------------------------------------------------
         | Passenger Routes
@@ -309,6 +324,9 @@ Route::prefix('v1')->group(function () {
     */
     // Shared Trip View (Public - no auth required)
     Route::get('/shared-trip/{code}', [\App\Http\Controllers\SafetyController::class, 'getSharedTrip']);
+
+    // SOS Tracking (Public - no auth required)
+    Route::get('/track-sos/{trackingCode}', [\App\Http\Controllers\SOSController::class, 'track']);
 
     /*
     |--------------------------------------------------------------------------
