@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Broadcast;
-use App\Models\User;
 use App\Models\Ride;
+use Illuminate\Support\Facades\Broadcast;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,61 +14,34 @@ use App\Models\Ride;
 |
 */
 
-// User private channel
-Broadcast::channel('user.{userId}', function (User $user, int $userId) {
+// User's private channel
+Broadcast::channel('user.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
 
-// Driver channel
-Broadcast::channel('driver.{driverId}', function (User $user, int $driverId) {
-    return $user->user_type === 'driver' && (int) $user->id === (int) $driverId;
-});
-
-// Ride channel (accessible by passenger and driver)
-Broadcast::channel('ride.{rideId}', function (User $user, int $rideId) {
+// Ride's private channel
+Broadcast::channel('ride.{rideId}', function ($user, $rideId) {
     $ride = Ride::find($rideId);
 
     if (!$ride) {
         return false;
     }
 
+    // Allow passenger and driver to listen
     return (int) $user->id === (int) $ride->passenger_id
         || (int) $user->id === (int) $ride->driver_id;
 });
 
-// Chat channel (accessible by passenger and driver of the ride)
-Broadcast::channel('chat.{rideId}', function (User $user, int $rideId) {
-    $ride = Ride::find($rideId);
-
-    if (!$ride) {
+// Driver's presence channel (online drivers)
+Broadcast::channel('drivers-online', function ($user) {
+    if ($user->user_type !== 'driver') {
         return false;
     }
 
-    return (int) $user->id === (int) $ride->passenger_id
-        || (int) $user->id === (int) $ride->driver_id;
-});
-
-// Available rides channel (for drivers in specific area)
-Broadcast::channel('available-rides', function (User $user) {
-    return $user->user_type === 'driver'
-        && $user->driverProfile
-        && $user->driverProfile->status === 'approved';
-});
-
-// Admin monitoring channel
-Broadcast::channel('admin', function (User $user) {
-    return $user->hasRole(['super_admin', 'admin']);
-});
-
-// Presence channel for online drivers (for admin dashboard)
-Broadcast::channel('online-drivers', function (User $user) {
-    if ($user->user_type === 'driver' && $user->driverProfile && $user->driverProfile->is_online) {
-        return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'latitude' => $user->driverProfile->current_latitude,
-            'longitude' => $user->driverProfile->current_longitude,
-        ];
-    }
-    return false;
+    return [
+        'id' => $user->id,
+        'name' => $user->name,
+        'latitude' => $user->current_latitude,
+        'longitude' => $user->current_longitude,
+    ];
 });
