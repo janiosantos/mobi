@@ -129,6 +129,16 @@ Route::prefix('v1')->group(function () {
             Route::post('/share', [\App\Http\Controllers\SafetyController::class, 'shareTrip']);
             Route::post('/sos', [\App\Http\Controllers\SafetyController::class, 'triggerSOS']);
             Route::delete('/sos', [\App\Http\Controllers\SafetyController::class, 'cancelSOS']);
+
+            // Multiple Stops
+            Route::prefix('stops')->group(function () {
+                Route::get('/', [\App\Http\Controllers\RideStopController::class, 'index']);
+                Route::post('/', [\App\Http\Controllers\RideStopController::class, 'store']);
+                Route::put('/{stop}', [\App\Http\Controllers\RideStopController::class, 'update']);
+                Route::delete('/{stop}', [\App\Http\Controllers\RideStopController::class, 'destroy']);
+                Route::post('/{stop}/arrive', [\App\Http\Controllers\RideStopController::class, 'arrive']);
+                Route::post('/{stop}/depart', [\App\Http\Controllers\RideStopController::class, 'depart']);
+            });
         });
 
         /*

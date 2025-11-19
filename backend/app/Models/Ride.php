@@ -34,6 +34,8 @@ class Ride extends Model
         'dropoff_country',
         'dropoff_postal_code',
         'dropoff_notes',
+        'has_stops',
+        'stops_count',
         'estimated_distance',
         'estimated_duration',
         'actual_distance',
@@ -74,6 +76,8 @@ class Ride extends Model
             'pickup_longitude' => 'decimal:7',
             'dropoff_latitude' => 'decimal:7',
             'dropoff_longitude' => 'decimal:7',
+            'has_stops' => 'boolean',
+            'stops_count' => 'integer',
             'estimated_distance' => 'decimal:2',
             'actual_distance' => 'decimal:2',
             'estimated_price' => 'decimal:2',
@@ -163,6 +167,11 @@ class Ride extends Model
     public function driverRating()
     {
         return $this->hasOne(Rating::class)->where('rater_type', 'driver');
+    }
+
+    public function stops()
+    {
+        return $this->hasMany(RideStop::class)->orderBy('stop_number');
     }
 
     /*
