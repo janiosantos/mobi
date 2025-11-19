@@ -5,6 +5,7 @@ export 'src/models/user.dart';
 export 'src/models/ride.dart';
 export 'src/models/ride_stop.dart';
 export 'src/models/vehicle.dart';
+export 'src/models/vehicle_category.dart';
 export 'src/models/payment.dart';
 export 'src/models/location.dart';
 export 'src/models/chat_message.dart';
@@ -28,6 +29,7 @@ export 'src/repositories/payment_repository.dart';
 export 'src/repositories/shared_ride_repository.dart';
 export 'src/repositories/saved_place_repository.dart';
 export 'src/repositories/safety_repository.dart';
+export 'src/repositories/vehicle_category_repository.dart';
 
 // Constants
 export 'src/constants/api_constants.dart';
