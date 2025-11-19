@@ -32,6 +32,11 @@ export 'src/services/emergency_service.dart';
 export 'src/interceptors/retry_interceptor.dart';
 export 'src/interceptors/logging_interceptor.dart';
 
+// Cache
+export 'src/cache/cache_manager.dart';
+export 'src/cache/cache_strategy.dart';
+export 'src/cache/cache_interceptor.dart';
+
 // Config
 export 'src/config/dio_config.dart';
 

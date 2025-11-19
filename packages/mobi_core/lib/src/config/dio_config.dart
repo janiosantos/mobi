@@ -1,6 +1,9 @@
 import 'package:dio/dio.dart';
 import '../interceptors/retry_interceptor.dart';
 import '../interceptors/logging_interceptor.dart';
+import '../cache/cache_interceptor.dart';
+import '../cache/cache_manager.dart';
+import '../cache/cache_strategy.dart';
 import '../constants/api_constants.dart';
 
 /// Configuration class for Dio HTTP client
@@ -126,6 +129,72 @@ class DioConfig {
         },
       ),
     );
+
+    return dio;
+  }
+
+  /// Create a Dio instance with caching enabled
+  static Future<Dio> createCachedDio({
+    String? baseUrl,
+    String? authToken,
+    bool enableRetry = true,
+    bool enableLogging = false,
+    CacheConfig? defaultCacheConfig,
+    Map<String, CacheConfig>? endpointConfigs,
+    int? maxCacheSizeBytes,
+  }) async {
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl ?? ApiConstants.baseUrl,
+        connectTimeout: const Duration(milliseconds: 30000),
+        receiveTimeout: const Duration(milliseconds: 30000),
+        sendTimeout: const Duration(milliseconds: 30000),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          if (authToken != null) 'Authorization': 'Bearer $authToken',
+        },
+      ),
+    );
+
+    // Initialize cache manager
+    final cacheManager = await CacheManager.init(
+      maxCacheSize: maxCacheSizeBytes,
+    );
+
+    // Add cache interceptor (should be first to intercept requests)
+    dio.interceptors.add(
+      CacheInterceptor(
+        cacheManager: cacheManager,
+        defaultConfig: defaultCacheConfig ?? const CacheConfig(),
+        endpointConfigs: endpointConfigs ?? {},
+      ),
+    );
+
+    // Add retry interceptor
+    if (enableRetry) {
+      dio.interceptors.add(
+        RetryInterceptor(
+          maxRetries: 3,
+          initialDelayMs: 1000,
+          backoffMultiplier: 2.0,
+          maxDelayMs: 30000,
+        ),
+      );
+    }
+
+    // Add logging interceptor
+    if (enableLogging) {
+      dio.interceptors.add(
+        LoggingInterceptor(
+          logRequestHeader: true,
+          logRequestBody: true,
+          logResponseHeader: false,
+          logResponseBody: true,
+          logError: true,
+        ),
+      );
+    }
 
     return dio;
   }
