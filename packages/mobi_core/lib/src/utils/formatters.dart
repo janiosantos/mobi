@@ -150,4 +150,7 @@ class Formatters {
       return 'Agora';
     }
   }
+
+  // Alias for formatRideStatus
+  static String formatStatus(String status) => formatRideStatus(status);
 }
