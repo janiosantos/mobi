@@ -76,10 +76,27 @@ Route::prefix('v1')->group(function () {
         });
 
         // Chat (Shared between Passenger and Driver)
-        Route::prefix('chat')->group(function () {
-            Route::get('/rides/{ride}/messages', [ChatController::class, 'index']);
-            Route::post('/rides/{ride}/messages', [ChatController::class, 'store']);
-            Route::post('/messages/{message}/read', [ChatController::class, 'markAsRead']);
+        Route::prefix('rides/{ride}')->group(function () {
+            Route::get('/messages', [\App\Http\Controllers\ChatController::class, 'index']);
+            Route::post('/messages', [\App\Http\Controllers\ChatController::class, 'store']);
+            Route::put('/messages/{message}/read', [\App\Http\Controllers\ChatController::class, 'markAsRead']);
+            Route::put('/messages/read-all', [\App\Http\Controllers\ChatController::class, 'markAllAsRead']);
+            Route::get('/messages/unread-count', [\App\Http\Controllers\ChatController::class, 'unreadCount']);
+        });
+
+        // Shared Rides (Carpooling)
+        Route::prefix('shared-rides')->group(function () {
+            Route::get('/search', [\App\Http\Controllers\SharedRideController::class, 'search']);
+            Route::post('/', [\App\Http\Controllers\SharedRideController::class, 'store']);
+            Route::get('/{sharedRide}', [\App\Http\Controllers\SharedRideController::class, 'show']);
+            Route::post('/{sharedRide}/join', [\App\Http\Controllers\SharedRideController::class, 'join']);
+            Route::post('/{sharedRide}/leave', [\App\Http\Controllers\SharedRideController::class, 'leave']);
+            Route::post('/{sharedRide}/cancel', [\App\Http\Controllers\SharedRideController::class, 'cancel']);
+            Route::post('/{sharedRide}/start', [\App\Http\Controllers\SharedRideController::class, 'start']);
+            Route::post('/{sharedRide}/passengers/{passenger}/pickup', [\App\Http\Controllers\SharedRideController::class, 'pickupPassenger']);
+            Route::post('/{sharedRide}/passengers/{passenger}/dropoff', [\App\Http\Controllers\SharedRideController::class, 'dropoffPassenger']);
+            Route::get('/my-rides/driver', [\App\Http\Controllers\SharedRideController::class, 'myRidesAsDriver']);
+            Route::get('/my-rides/passenger', [\App\Http\Controllers\SharedRideController::class, 'myRidesAsPassenger']);
         });
 
         /*
@@ -204,5 +221,11 @@ Route::prefix('v1')->group(function () {
     Route::prefix('webhooks')->group(function () {
         Route::post('/mercadopago', [\App\Http\Controllers\Api\V1\WebhookController::class, 'mercadopago']);
         Route::post('/notifications', [\App\Http\Controllers\Api\V1\WebhookController::class, 'notifications']);
+
+        // Payment Gateway Webhooks
+        Route::post('/efi', [\App\Http\Controllers\PaymentWebhookController::class, 'efi']);
+        Route::post('/stone', [\App\Http\Controllers\PaymentWebhookController::class, 'stone']);
+        Route::post('/pagseguro', [\App\Http\Controllers\PaymentWebhookController::class, 'pagseguro']);
+        Route::post('/cielo', [\App\Http\Controllers\PaymentWebhookController::class, 'cielo']);
     });
 });
