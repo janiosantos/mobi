@@ -28,6 +28,13 @@ export 'src/services/theme_service.dart';
 export 'src/services/chat_service.dart';
 export 'src/services/emergency_service.dart';
 
+// Interceptors
+export 'src/interceptors/retry_interceptor.dart';
+export 'src/interceptors/logging_interceptor.dart';
+
+// Config
+export 'src/config/dio_config.dart';
+
 // Repositories
 export 'src/repositories/auth_repository.dart';
 export 'src/repositories/ride_repository.dart';
