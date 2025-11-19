@@ -13,6 +13,7 @@ export 'src/models/shared_ride.dart';
 export 'src/models/saved_place.dart';
 export 'src/models/emergency_contact.dart';
 export 'src/models/shared_trip_info.dart';
+export 'src/models/scheduled_ride.dart';
 
 // Services
 export 'src/services/api_service.dart';
@@ -30,6 +31,7 @@ export 'src/repositories/shared_ride_repository.dart';
 export 'src/repositories/saved_place_repository.dart';
 export 'src/repositories/safety_repository.dart';
 export 'src/repositories/vehicle_category_repository.dart';
+export 'src/repositories/scheduled_ride_repository.dart';
 
 // Constants
 export 'src/constants/api_constants.dart';
