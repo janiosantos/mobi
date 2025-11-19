@@ -34,6 +34,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'wallet_balance',
         'average_rating',
         'total_ratings',
+        'referral_code',
+        'referred_by',
+        'referral_credits',
+        'referrals_count',
+        'successful_referrals_count',
         'is_active',
         'is_banned',
         'banned_at',
@@ -67,6 +72,9 @@ class User extends Authenticatable implements MustVerifyEmail
             'birth_date' => 'date',
             'wallet_balance' => 'decimal:2',
             'average_rating' => 'decimal:2',
+            'referral_credits' => 'decimal:2',
+            'referrals_count' => 'integer',
+            'successful_referrals_count' => 'integer',
             'is_active' => 'boolean',
             'is_banned' => 'boolean',
             'banned_at' => 'datetime',
@@ -202,6 +210,30 @@ class User extends Authenticatable implements MustVerifyEmail
     public function emergencyContacts()
     {
         return $this->hasMany(EmergencyContact::class);
+    }
+
+    /**
+     * Referrals made by this user
+     */
+    public function referralsMade()
+    {
+        return $this->hasMany(Referral::class, 'referrer_id');
+    }
+
+    /**
+     * Referral received by this user
+     */
+    public function referralReceived()
+    {
+        return $this->hasOne(Referral::class, 'referred_id');
+    }
+
+    /**
+     * User who referred this user
+     */
+    public function referredBy()
+    {
+        return $this->belongsTo(User::class, 'referred_by');
     }
 
     /*

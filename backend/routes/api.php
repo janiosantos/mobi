@@ -169,6 +169,16 @@ Route::prefix('v1')->group(function () {
             Route::post('/{inviteCode}/pay', [\App\Http\Controllers\SplitFareController::class, 'pay']);
         });
 
+        // Referral System
+        Route::prefix('referrals')->group(function () {
+            Route::get('/me', [\App\Http\Controllers\ReferralController::class, 'me']);
+            Route::get('/', [\App\Http\Controllers\ReferralController::class, 'index']);
+            Route::post('/invite', [\App\Http\Controllers\ReferralController::class, 'invite']);
+            Route::post('/apply', [\App\Http\Controllers\ReferralController::class, 'apply']);
+            Route::get('/leaderboard', [\App\Http\Controllers\ReferralController::class, 'leaderboard']);
+            Route::get('/{code}', [\App\Http\Controllers\ReferralController::class, 'show']);
+        });
+
         /*
         |--------------------------------------------------------------------------
         | Passenger Routes
