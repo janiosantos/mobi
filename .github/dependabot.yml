@@ -1,0 +1,64 @@
+version: 2
+
+updates:
+  # Flutter dependencies - mobi_core
+  - package-ecosystem: "pub"
+    directory: "/packages/mobi_core"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "janiosantos"
+    labels:
+      - "dependencies"
+      - "flutter"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # Flutter dependencies - mobi_passenger
+  - package-ecosystem: "pub"
+    directory: "/apps/mobi_passenger"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "janiosantos"
+    labels:
+      - "dependencies"
+      - "flutter"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # Composer dependencies - Backend
+  - package-ecosystem: "composer"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "janiosantos"
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "janiosantos"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "chore(ci)"

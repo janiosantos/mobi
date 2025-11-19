@@ -1,0 +1,45 @@
+{
+  "categories": [
+    {
+      "title": "## 🚀 Features",
+      "labels": ["feat", "feature", "enhancement"]
+    },
+    {
+      "title": "## 🐛 Bug Fixes",
+      "labels": ["fix", "bugfix", "bug"]
+    },
+    {
+      "title": "## 📚 Documentation",
+      "labels": ["docs", "documentation"]
+    },
+    {
+      "title": "## 🔧 Maintenance",
+      "labels": ["chore", "refactor", "perf", "style"]
+    },
+    {
+      "title": "## 🧪 Tests",
+      "labels": ["test", "tests"]
+    },
+    {
+      "title": "## 🏗️ Build & CI",
+      "labels": ["build", "ci", "cd"]
+    }
+  ],
+  "ignore_labels": [
+    "ignore",
+    "wontfix",
+    "duplicate",
+    "invalid"
+  ],
+  "sort": "ASC",
+  "template": "#{{CHANGELOG}}\n\n**Full Changelog**: #{{FROM_TAG}}...#{{TO_TAG}}",
+  "pr_template": "- #{{TITLE}} (#{{NUMBER}})",
+  "empty_template": "- No changes",
+  "label_extractor": [
+    {
+      "pattern": "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\\(.+\\))?:",
+      "on_property": "title",
+      "method": "match"
+    }
+  ]
+}

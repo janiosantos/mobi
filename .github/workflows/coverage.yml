@@ -1,0 +1,312 @@
+name: Code Coverage
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run coverage daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: '3.24.0'
+
+jobs:
+  # ============================================
+  # Job 1: Generate Coverage Report
+  # ============================================
+  coverage:
+    name: Generate Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔧 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Install dependencies - mobi_core
+        working-directory: packages/mobi_core
+        run: flutter pub get
+
+      - name: 🧪 Run tests with coverage - mobi_core
+        working-directory: packages/mobi_core
+        run: flutter test --coverage --reporter expanded
+
+      - name: 📊 Generate HTML coverage report
+        working-directory: packages/mobi_core
+        run: |
+          flutter pub global activate coverage
+          flutter pub global run coverage:format_coverage \
+            --lcov \
+            --in=coverage \
+            --out=coverage/lcov.info \
+            --report-on=lib \
+            --check-ignore
+
+          # Generate HTML report
+          genhtml coverage/lcov.info -o coverage/html
+
+      - name: 📈 Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: packages/mobi_core/coverage/lcov.info
+          flags: mobi_core
+          name: mobi-core-coverage
+          fail_ci_if_error: true
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: 📊 Coverage Summary
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: packages/mobi_core/coverage/lcov.info
+          badge: true
+          format: markdown
+          output: both
+
+      - name: 💬 Add coverage comment to PR
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: code-coverage-results.md
+
+      - name: ✅ Check coverage threshold
+        uses: VeryGoodOpenSource/very_good_coverage@v2
+        with:
+          path: packages/mobi_core/coverage/lcov.info
+          min_coverage: 70
+          exclude: |
+            **/*.g.dart
+            **/*.freezed.dart
+            **/generated/**
+            **/*.config.dart
+
+      - name: 📦 Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            packages/mobi_core/coverage/
+            code-coverage-results.md
+          retention-days: 30
+
+      - name: 📊 Coverage by module
+        working-directory: packages/mobi_core
+        run: |
+          echo "## 📊 Coverage by Module" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Calculate coverage for each module
+          for dir in lib/src/*/; do
+            if [ -d "$dir" ]; then
+              module=$(basename "$dir")
+              echo "### $module" >> $GITHUB_STEP_SUMMARY
+
+              # Filter coverage for this module
+              lcov --extract coverage/lcov.info "*/$module/*" -o "coverage/${module}.info" 2>/dev/null || true
+
+              if [ -f "coverage/${module}.info" ]; then
+                coverage=$(lcov --summary "coverage/${module}.info" 2>&1 | grep "lines" | awk '{print $2}')
+                echo "Coverage: $coverage" >> $GITHUB_STEP_SUMMARY
+              fi
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  # ============================================
+  # Job 2: Coverage Trends
+  # ============================================
+  coverage-trends:
+    name: Coverage Trends
+    runs-on: ubuntu-latest
+    needs: coverage
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: ./coverage
+
+      - name: 📈 Store coverage history
+        uses: actions/cache@v4
+        with:
+          path: coverage-history
+          key: coverage-history-${{ github.sha }}
+          restore-keys: |
+            coverage-history-
+
+      - name: 📊 Generate coverage trend
+        run: |
+          mkdir -p coverage-history
+
+          # Extract coverage percentage
+          COVERAGE=$(grep -o 'lines......: [0-9.]*%' coverage/lcov.info | head -1 | grep -o '[0-9.]*')
+
+          # Store in history
+          echo "$(date +%Y-%m-%d),$COVERAGE" >> coverage-history/history.csv
+
+          # Keep only last 30 days
+          tail -30 coverage-history/history.csv > coverage-history/history.tmp
+          mv coverage-history/history.tmp coverage-history/history.csv
+
+          echo "## 📈 Coverage Trend (Last 30 Days)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Current: **${COVERAGE}%**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat coverage-history/history.csv >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # Job 3: Uncovered Code Report
+  # ============================================
+  uncovered-report:
+    name: Uncovered Code Report
+    runs-on: ubuntu-latest
+    needs: coverage
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: ./coverage
+
+      - name: 🔍 Find uncovered files
+        run: |
+          echo "## 🔍 Files with Low Coverage (<80%)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| File | Coverage |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|----------|" >> $GITHUB_STEP_SUMMARY
+
+          # Parse lcov.info to find files with low coverage
+          # This is a simplified version - you may want to use a proper parser
+          awk '/^SF:/ {file=$0} /^LH:/ {hit=$2} /^LF:/ {found=$2; if (found>0 && hit/found<0.8) print file, hit/found*100"%"}' \
+            coverage/lcov.info | head -10 >> $GITHUB_STEP_SUMMARY || true
+
+  # ============================================
+  # Job 4: Backend Coverage (Laravel)
+  # ============================================
+  backend-coverage:
+    name: Backend Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: mobi_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup PHP with coverage
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, pdo_mysql, zip
+          coverage: xdebug
+
+      - name: 📦 Install Composer dependencies
+        working-directory: backend
+        run: composer install --no-interaction --prefer-dist
+
+      - name: 📝 Setup environment
+        working-directory: backend
+        run: |
+          cp .env.example .env.testing
+          php artisan key:generate --env=testing
+
+      - name: 🗃️ Run migrations
+        working-directory: backend
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: mobi_test
+          DB_USERNAME: root
+          DB_PASSWORD: password
+        run: php artisan migrate --env=testing --force
+
+      - name: 🧪 Run PHPUnit with coverage
+        working-directory: backend
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: mobi_test
+          DB_USERNAME: root
+          DB_PASSWORD: password
+        run: |
+          if [ -f "vendor/bin/phpunit" ]; then
+            vendor/bin/phpunit \
+              --coverage-text \
+              --coverage-clover=coverage.xml \
+              --coverage-html=coverage/html \
+              --log-junit=coverage/junit.xml
+          fi
+
+      - name: 📈 Upload backend coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: 📦 Upload backend coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: backend/coverage/
+          retention-days: 30
+
+      - name: 📊 Backend coverage summary
+        working-directory: backend
+        run: |
+          echo "## 📊 Backend Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "coverage.xml" ]; then
+            # Extract coverage from clover XML
+            COVERAGE=$(grep -o 'statements="[0-9]*"' coverage.xml | head -1 | grep -o '[0-9]*')
+            COVERED=$(grep -o 'coveredstatements="[0-9]*"' coverage.xml | head -1 | grep -o '[0-9]*')
+
+            if [ -n "$COVERAGE" ] && [ -n "$COVERED" ] && [ "$COVERAGE" -gt 0 ]; then
+              PERCENTAGE=$(echo "scale=2; $COVERED * 100 / $COVERAGE" | bc)
+              echo "Coverage: **${PERCENTAGE}%**" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
