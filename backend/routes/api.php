@@ -179,6 +179,15 @@ Route::prefix('v1')->group(function () {
             Route::get('/{code}', [\App\Http\Controllers\ReferralController::class, 'show']);
         });
 
+        // Reports & Insights
+        Route::prefix('reports')->group(function () {
+            Route::get('/rides', [\App\Http\Controllers\ReportController::class, 'rideHistory']);
+            Route::get('/spending', [\App\Http\Controllers\ReportController::class, 'spendingSummary']);
+            Route::get('/earnings', [\App\Http\Controllers\ReportController::class, 'earningsSummary']);
+            Route::get('/stats', [\App\Http\Controllers\ReportController::class, 'userStats']);
+            Route::get('/export', [\App\Http\Controllers\ReportController::class, 'export']);
+        });
+
         /*
         |--------------------------------------------------------------------------
         | Passenger Routes
