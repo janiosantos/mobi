@@ -15,8 +15,14 @@ class VehicleCategory extends Model
         'slug',
         'description',
         'icon',
+        'base_fare',
+        'per_km_rate',
+        'per_minute_rate',
+        'minimum_fare',
         'base_multiplier',
-        'max_passengers',
+        'capacity',
+        'max_passengers', // deprecated, use capacity
+        'features',
         'is_active',
         'sort_order',
     ];
@@ -24,8 +30,15 @@ class VehicleCategory extends Model
     protected function casts(): array
     {
         return [
+            'base_fare' => 'decimal:2',
+            'per_km_rate' => 'decimal:2',
+            'per_minute_rate' => 'decimal:2',
+            'minimum_fare' => 'decimal:2',
             'base_multiplier' => 'decimal:2',
+            'capacity' => 'integer',
+            'features' => 'array',
             'is_active' => 'boolean',
+            'sort_order' => 'integer',
         ];
     }
 
@@ -47,5 +60,54 @@ class VehicleCategory extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true)->orderBy('sort_order');
+    }
+
+    /**
+     * Scope ordered categories
+     */
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order')->orderBy('name');
+    }
+
+    /**
+     * Scope by slug
+     */
+    public function scopeBySlug($query, string $slug)
+    {
+        return $query->where('slug', $slug);
+    }
+
+    /**
+     * Calculate price for a ride
+     */
+    public function calculatePrice(float $distanceKm, int $durationMinutes): float
+    {
+        $distanceFare = $distanceKm * $this->per_km_rate;
+        $timeFare = $durationMinutes * $this->per_minute_rate;
+        $totalFare = $this->base_fare + $distanceFare + $timeFare;
+
+        // Apply minimum fare
+        return max($totalFare, $this->minimum_fare);
+    }
+
+    /**
+     * Get estimated price range as string
+     */
+    public function getPriceRangeAttribute(): string
+    {
+        return 'A partir de R$ ' . number_format($this->minimum_fare, 2, ',', '.');
+    }
+
+    /**
+     * Get features as comma-separated string
+     */
+    public function getFeaturesStringAttribute(): string
+    {
+        if (!$this->features || !is_array($this->features)) {
+            return '';
+        }
+
+        return implode(', ', $this->features);
     }
 }

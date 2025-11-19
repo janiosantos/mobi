@@ -141,6 +141,14 @@ Route::prefix('v1')->group(function () {
             });
         });
 
+        // Vehicle Categories
+        Route::prefix('vehicle-categories')->group(function () {
+            Route::get('/', [\App\Http\Controllers\VehicleCategoryController::class, 'index']);
+            Route::get('/{slug}', [\App\Http\Controllers\VehicleCategoryController::class, 'show']);
+            Route::post('/{slug}/estimate', [\App\Http\Controllers\VehicleCategoryController::class, 'estimatePrice']);
+            Route::post('/compare-price', [\App\Http\Controllers\VehicleCategoryController::class, 'comparePrice']);
+        });
+
         /*
         |--------------------------------------------------------------------------
         | Passenger Routes
