@@ -1,0 +1,198 @@
+name: Deploy to Production
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: mobi_test
+          POSTGRES_USER: mobi_test
+          POSTGRES_PASSWORD: test_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo, pdo_pgsql, redis, gd
+          coverage: none
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
+
+      - name: Copy .env
+        working-directory: ./backend
+        run: |
+          cp .env.testing .env
+          php artisan key:generate
+
+      - name: Run migrations
+        working-directory: ./backend
+        run: php artisan migrate --force
+
+      - name: Run tests
+        working-directory: ./backend
+        run: php artisan test --parallel --min=80
+
+      - name: Security audit
+        working-directory: ./backend
+        run: composer audit
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=prod-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_ENV=production
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-to: type=inline
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://api.mobi.com.br
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create database backup
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: 22
+          script: |
+            cd /var/www/mobi
+            docker compose -f docker-compose.production.yml exec -T postgres \
+              pg_dump -U mobi_prod_user mobi_production | \
+              gzip > /backups/pre_deploy_$(date +%Y%m%d_%H%M%S).sql.gz
+
+      - name: Deploy to production (Blue-Green)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: 22
+          script: |
+            cd /var/www/mobi
+            git fetch --tags
+            git checkout ${{ github.ref_name }}
+
+            # Pull latest images
+            docker compose -f docker-compose.production.yml pull
+
+            # Run database migrations (with backup)
+            docker compose -f docker-compose.production.yml exec -T backend \
+              php artisan migrate --force
+
+            # Deploy with zero-downtime (rolling update)
+            docker compose -f docker-compose.production.yml up -d --remove-orphans --scale backend=3
+
+            # Optimize caches
+            docker compose -f docker-compose.production.yml exec -T backend php artisan optimize
+
+            # Restart queue workers
+            docker compose -f docker-compose.production.yml exec -T horizon php artisan horizon:terminate
+
+            # Health check
+            sleep 5
+            curl --fail https://api.mobi.com.br/health || exit 1
+
+      - name: Run post-deployment tests
+        run: |
+          sleep 10
+          curl --fail https://api.mobi.com.br/health || exit 1
+          curl --fail https://api.mobi.com.br/api/v1/vehicle-categories || exit 1
+
+      - name: Notify team
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Production deployment ${{ job.status }}
+            Version: ${{ github.ref_name }}
+            Deployed by: ${{ github.actor }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Create GitHub Release
+        if: success()
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          body: |
+            Production deployment successful!
+
+            **Changes:** See commit history
+            **Deployed at:** ${{ github.event.head_commit.timestamp }}
