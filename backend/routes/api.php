@@ -1,11 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\V1\Auth\AuthController;
-use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
+use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\Passenger\RideController;
-use App\Http\Controllers\Api\V1\Passenger\PaymentMethodController;
-use App\Http\Controllers\Api\V1\Passenger\CouponController;
+use App\Http\Controllers\Api\V1\PaymentMethodController;
+use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\Passenger\RatingController as PassengerRatingController;
 use App\Http\Controllers\Api\V1\Driver\DriverRideController;
 use App\Http\Controllers\Api\V1\Driver\DriverController;
@@ -31,21 +30,18 @@ Route::prefix('v1')->group(function () {
     */
     Route::prefix('auth')->group(function () {
         // Registration
-        Route::post('/register', [AuthController::class, 'register']);
+        Route::post('/register/passenger', [AuthController::class, 'registerPassenger']);
         Route::post('/register/driver', [AuthController::class, 'registerDriver']);
 
         // Login
         Route::post('/login', [AuthController::class, 'login']);
 
-        // Password Reset
-        Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
-        Route::post('/reset-password', [PasswordResetController::class, 'reset']);
 
         // Protected Auth Routes
         Route::middleware('auth:sanctum')->group(function () {
-            Route::get('/me', [AuthController::class, 'me']);
+            Route::get('/me', [AuthController::class, 'profile']);
             Route::post('/logout', [AuthController::class, 'logout']);
-            Route::post('/refresh', [AuthController::class, 'refresh']);
+            Route::post('/refresh', [AuthController::class, 'refreshToken']);
             Route::delete('/account', [AuthController::class, 'deleteAccount']);
         });
     });
@@ -354,10 +350,8 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::prefix('webhooks')->group(function () {
-        Route::post('/mercadopago', [\App\Http\Controllers\Api\V1\WebhookController::class, 'mercadopago']);
-        Route::post('/notifications', [\App\Http\Controllers\Api\V1\WebhookController::class, 'notifications']);
-
         // Payment Gateway Webhooks
+        Route::post('/mercadopago', [\App\Http\Controllers\PaymentWebhookController::class, 'mercadopago']);
         Route::post('/efi', [\App\Http\Controllers\PaymentWebhookController::class, 'efi']);
         Route::post('/stone', [\App\Http\Controllers\PaymentWebhookController::class, 'stone']);
         Route::post('/pagseguro', [\App\Http\Controllers\PaymentWebhookController::class, 'pagseguro']);
