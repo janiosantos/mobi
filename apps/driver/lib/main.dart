@@ -8,6 +8,7 @@ import 'bloc/auth/auth_bloc.dart';
 import 'bloc/auth/auth_event.dart';
 import 'bloc/auth/auth_state.dart';
 import 'core/service_locator.dart';
+import 'core/routes.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
@@ -86,6 +87,8 @@ class MobiDriverApp extends StatelessWidget {
                 }
               },
             ),
+            routes: AppRoutes.routes,
+            onGenerateRoute: AppRoutes.onGenerateRoute,
           );
         },
       ),

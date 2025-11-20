@@ -1,0 +1,35 @@
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+PaymentMethod _$PaymentMethodFromJson(Map<String, dynamic> json) =>
+    PaymentMethod(
+      id: (json['id'] as num).toInt(),
+      userId: (json['user_id'] as num).toInt(),
+      type: json['type'] as String,
+      cardBrand: json['card_brand'] as String?,
+      lastFour: json['last_four'] as String,
+      expiryMonth: json['expiry_month'] as String?,
+      expiryYear: json['expiry_year'] as String?,
+      cardholderName: json['cardholder_name'] as String?,
+      isDefault: json['is_default'] as bool?,
+      gatewayToken: json['gateway_token'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
+    );
+
+Map<String, dynamic> _$PaymentMethodToJson(PaymentMethod instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'user_id': instance.userId,
+      'type': instance.type,
+      'card_brand': instance.cardBrand,
+      'last_four': instance.lastFour,
+      'expiry_month': instance.expiryMonth,
+      'expiry_year': instance.expiryYear,
+      'cardholder_name': instance.cardholderName,
+      'is_default': instance.isDefault,
+      'gateway_token': instance.gatewayToken,
+      'created_at': instance.createdAt.toIso8601String(),
+      'updated_at': instance.updatedAt.toIso8601String(),
+    };

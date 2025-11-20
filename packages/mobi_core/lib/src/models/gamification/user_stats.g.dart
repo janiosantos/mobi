@@ -1,0 +1,123 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'user_stats.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+UserStats _$UserStatsFromJson(Map<String, dynamic> json) => UserStats(
+      level: (json['level'] as num).toInt(),
+      currentXp: (json['current_xp'] as num).toInt(),
+      totalXp: (json['total_xp'] as num).toInt(),
+      xpToNextLevel: (json['xp_to_next_level'] as num).toInt(),
+      progressPercentage: (json['progress_percentage'] as num?)?.toDouble(),
+      rides: json['rides'] == null
+          ? null
+          : RideStats.fromJson(json['rides'] as Map<String, dynamic>),
+      earnings: json['earnings'] == null
+          ? null
+          : EarningsStats.fromJson(json['earnings'] as Map<String, dynamic>),
+      ratings: json['ratings'] == null
+          ? null
+          : RatingStats.fromJson(json['ratings'] as Map<String, dynamic>),
+      streak: json['streak'] == null
+          ? null
+          : StreakStats.fromJson(json['streak'] as Map<String, dynamic>),
+      badges: json['badges'] == null
+          ? null
+          : BadgeStats.fromJson(json['badges'] as Map<String, dynamic>),
+      achievements: json['achievements'] == null
+          ? null
+          : AchievementStats.fromJson(
+              json['achievements'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$UserStatsToJson(UserStats instance) => <String, dynamic>{
+      'level': instance.level,
+      'current_xp': instance.currentXp,
+      'total_xp': instance.totalXp,
+      'xp_to_next_level': instance.xpToNextLevel,
+      'progress_percentage': instance.progressPercentage,
+      'rides': instance.rides,
+      'earnings': instance.earnings,
+      'ratings': instance.ratings,
+      'streak': instance.streak,
+      'badges': instance.badges,
+      'achievements': instance.achievements,
+    };
+
+RideStats _$RideStatsFromJson(Map<String, dynamic> json) => RideStats(
+      total: (json['total'] as num).toInt(),
+      completed: (json['completed'] as num).toInt(),
+      cancelled: (json['cancelled'] as num).toInt(),
+      completionRate: (json['completion_rate'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$RideStatsToJson(RideStats instance) => <String, dynamic>{
+      'total': instance.total,
+      'completed': instance.completed,
+      'cancelled': instance.cancelled,
+      'completion_rate': instance.completionRate,
+    };
+
+EarningsStats _$EarningsStatsFromJson(Map<String, dynamic> json) =>
+    EarningsStats(
+      total: (json['total'] as num).toDouble(),
+    );
+
+Map<String, dynamic> _$EarningsStatsToJson(EarningsStats instance) =>
+    <String, dynamic>{
+      'total': instance.total,
+    };
+
+RatingStats _$RatingStatsFromJson(Map<String, dynamic> json) => RatingStats(
+      average: (json['average'] as num).toDouble(),
+      total: (json['total'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$RatingStatsToJson(RatingStats instance) =>
+    <String, dynamic>{
+      'average': instance.average,
+      'total': instance.total,
+    };
+
+StreakStats _$StreakStatsFromJson(Map<String, dynamic> json) => StreakStats(
+      current: (json['current'] as num).toInt(),
+      longest: (json['longest'] as num).toInt(),
+      lastRideDate: json['last_ride_date'] as String?,
+    );
+
+Map<String, dynamic> _$StreakStatsToJson(StreakStats instance) =>
+    <String, dynamic>{
+      'current': instance.current,
+      'longest': instance.longest,
+      'last_ride_date': instance.lastRideDate,
+    };
+
+BadgeStats _$BadgeStatsFromJson(Map<String, dynamic> json) => BadgeStats(
+      total: (json['total'] as num).toInt(),
+      byRarity: (json['by_rarity'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, (e as num).toInt()),
+      ),
+      earned: json['earned'] as List<dynamic>?,
+    );
+
+Map<String, dynamic> _$BadgeStatsToJson(BadgeStats instance) =>
+    <String, dynamic>{
+      'total': instance.total,
+      'by_rarity': instance.byRarity,
+      'earned': instance.earned,
+    };
+
+AchievementStats _$AchievementStatsFromJson(Map<String, dynamic> json) =>
+    AchievementStats(
+      completed: json['completed'] as List<dynamic>?,
+      inProgress: json['in_progress'] as List<dynamic>?,
+    );
+
+Map<String, dynamic> _$AchievementStatsToJson(AchievementStats instance) =>
+    <String, dynamic>{
+      'completed': instance.completed,
+      'in_progress': instance.inProgress,
+    };

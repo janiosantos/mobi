@@ -6,13 +6,13 @@ import 'package:mobi_core/mobi_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/service_locator.dart';
+import 'core/routes.dart';
 import 'bloc/auth/auth_bloc.dart';
 import 'bloc/auth/auth_event.dart';
 import 'bloc/auth/auth_state.dart';
 import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -88,11 +88,8 @@ class MobiPassengerApp extends StatelessWidget {
                 }
               },
             ),
-            routes: {
-              '/login': (context) => const LoginScreen(),
-              '/register': (context) => const RegisterScreen(),
-              '/home': (context) => const HomeScreen(),
-            },
+            routes: AppRoutes.routes,
+            onGenerateRoute: AppRoutes.onGenerateRoute,
           );
         },
       ),
