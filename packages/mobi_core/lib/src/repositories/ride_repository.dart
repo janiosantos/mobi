@@ -47,6 +47,24 @@ class RideRepository {
     }
   }
 
+  Future<Map<String, dynamic>> getRideHistory(Map<String, dynamic> queryParams) async {
+    try {
+      final response = await _apiService.getRides(queryParams);
+      return {'success': true, 'data': response.data};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Ride> getRide(int rideId) async {
+    try {
+      final response = await _apiService.getRideDetail(rideId);
+      return Ride.fromJson(response.data['data']);
+    } catch (e) {
+      throw Exception('Failed to get ride: $e');
+    }
+  }
+
   Future<Map<String, dynamic>> getRideDetail(int rideId) async {
     try {
       final response = await _apiService.getRideDetail(rideId);
