@@ -37,7 +37,7 @@
 - **Database:** PostgreSQL 16 + Redis 7
 - **Real-time:** Laravel Reverb (WebSocket)
 - **Admin Panel:** Filament PHP 3
-- **Current Status:** Backend 80% complete, Apps basic structure ready
+- **Current Status:** Backend 65-70% complete (análise real), Apps 65-70% complete (não 30%!)
 - **Test Coverage:** Backend 85%, mobi_core 70%+
 
 ### Core Capabilities
@@ -2587,31 +2587,38 @@ docker-compose logs -f backend
 
 **Current Version:** 0.8.0-alpha
 
-**Backend:** 80% Complete
-- ✅ Core API (100%)
+**Backend:** 65-70% Complete (ANÁLISE REAL 2025-11-20)
+- ✅ Core API (75% - 40-50 rotas quebradas)
 - ✅ Authentication (100%)
 - ✅ Ride management (100%)
-- ✅ Payment system (100%)
+- ✅ Payment system (80% - falta PaymentMethodController)
 - ✅ Gamification (100%)
 - ✅ Safety features (100%)
-- ⚠️ Background jobs (50%)
-- ⚠️ Admin panel (30%)
-- ❌ Tests (85% coverage, need more)
+- ⚠️ Background jobs (40% - são stubs)
+- ⚠️ Admin panel (30% - não configurado)
+- ⚠️ Tests (65% coverage real, não 85%)
+- ❌ 10-12 Controllers faltando (NotificationController, ProfileController, etc.)
 
-**Mobile Apps:** 30% Complete
-- ✅ Basic structure
-- ✅ Authentication screens
-- ✅ Main screens defined
-- ⚠️ Implementation in progress
-- ❌ UI/UX polish needed
+**Mobile Apps:** 65-70% Complete (MUITO MELHOR QUE 30%!)
+- ✅ Infraestrutura (100%)
+- ✅ Authentication (100%)
+- ✅ BLoCs (95% - AuthBloc, LocationBloc, RideBloc, etc. FUNCIONAIS)
+- ✅ Main screens (70% com código real, não stubs!)
+- ✅ Passenger: 10 telas completas, 5.438 linhas
+- ✅ Driver: 7 telas completas, 3.252 linhas, ActiveRideBloc excelente!
+- ⚠️ Navegação (50% passenger, 40% driver)
+- ⚠️ Settings (10 TODOs cada)
+- ❌ Testes (0%)
 
-**Shared Package (mobi_core):** 90% Complete
-- ✅ Models (100%)
-- ✅ Services (100%)
-- ✅ Repositories (100%)
-- ✅ BLoCs (100%)
-- ✅ Utilities (100%)
-- ✅ Tests (70%+ coverage)
+**Shared Package (mobi_core):** 75% Complete (com problema CRÍTICO)
+- ✅ Models (100% - 20 models)
+- ✅ Services (100% - 7 services, 1.298 linhas)
+- ✅ Repositories (100% - 12 repositories)
+- ✅ BLoCs (100% - 5 BLoCs, RideBloc com 299 linhas!)
+- ✅ Utilities (100% - 2.524 linhas, validators com 495 linhas!)
+- ✅ Widgets (100% - 14 widgets, 1.486 linhas)
+- 🔴 CÓDIGO NÃO COMPILA - Faltam arquivos .g.dart (precisa build_runner!)
+- ⚠️ Tests (40-50% coverage, não 70%)
 
 **DevOps:** 95% Complete
 - ✅ Docker setup
@@ -2626,13 +2633,18 @@ docker-compose logs -f backend
 - ✅ Feature documentation
 - ⚠️ API documentation (OpenAPI spec pending)
 
-**Next Priorities:**
-1. Complete remaining background jobs
-2. Expand admin panel
-3. Finish mobile app implementations
-4. Increase test coverage to 90%+
-5. OpenAPI documentation
-6. Production deployment guide
+**Next Priorities (ver PLANO_ACAO_100.md):**
+1. 🔴 CRÍTICO: Rodar build_runner no mobi_core (15 min) - código não compila!
+2. Implementar 10-12 controllers faltantes no backend (24h)
+3. Completar lógica dos 7 Jobs (6h)
+4. Conectar navegação completa nas apps (7h)
+5. Adicionar testes (backend 65%→85%, apps 0%→70%, mobi_core 40%→75%)
+6. Configurar Filament Admin Panel (10h)
+7. Criar OpenAPI spec completo (5h)
+8. Guia de deploy e ambientes staging/prod (7h)
+
+**Total para 100%:** ~120 horas (3 semanas 1 dev full-time)
+**Veja plano detalhado:** PLANO_ACAO_100.md
 
 ---
 

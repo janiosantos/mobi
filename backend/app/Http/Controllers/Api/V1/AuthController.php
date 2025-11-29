@@ -24,6 +24,55 @@ class AuthController extends Controller
 
     /**
      * Register a new passenger
+     *
+     * @OA\Post(
+     *     path="/api/v1/auth/register/passenger",
+     *     tags={"Authentication"},
+     *     summary="Register a new passenger account",
+     *     description="Create a new passenger account with email, password, and profile information",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name", "email", "password", "phone"},
+     *             @OA\Property(property="name", type="string", example="João Silva"),
+     *             @OA\Property(property="email", type="string", format="email", example="joao@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123", minLength=8),
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="password123"),
+     *             @OA\Property(property="phone", type="string", example="11999999999"),
+     *             @OA\Property(property="cpf", type="string", example="12345678900"),
+     *             @OA\Property(property="birth_date", type="string", format="date", example="1990-01-15"),
+     *             @OA\Property(property="gender", type="string", enum={"male", "female", "other"}, example="male"),
+     *             @OA\Property(property="device_token", type="string", example="fcm_token_here"),
+     *             @OA\Property(property="device_type", type="string", enum={"android", "ios"}, example="android")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Passenger registered successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Passageiro registrado com sucesso!"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="user", type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="João Silva"),
+     *                     @OA\Property(property="email", type="string", example="joao@example.com"),
+     *                     @OA\Property(property="phone", type="string", example="11999999999"),
+     *                     @OA\Property(property="user_type", type="string", example="passenger"),
+     *                     @OA\Property(property="created_at", type="string", format="date-time")
+     *                 ),
+     *                 @OA\Property(property="token", type="string", example="1|abcdef123456...")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Erro de validação."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function registerPassenger(RegisterPassengerRequest $request): JsonResponse
     {
@@ -116,6 +165,41 @@ class AuthController extends Controller
 
     /**
      * Login user
+     *
+     * @OA\Post(
+     *     path="/api/v1/auth/login",
+     *     tags={"Authentication"},
+     *     summary="Authenticate user and receive token",
+     *     description="Login with email and password to receive authentication token",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email", "password"},
+     *             @OA\Property(property="email", type="string", format="email", example="joao@example.com"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123"),
+     *             @OA\Property(property="device_token", type="string", example="fcm_token_here"),
+     *             @OA\Property(property="device_type", type="string", enum={"android", "ios"}, example="android")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Login realizado com sucesso!"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="user", type="object"),
+     *                 @OA\Property(property="token", type="string", example="1|abcdef123456...")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid credentials",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Credenciais inválidas.")
+     *         )
+     *     )
+     * )
      */
     public function login(LoginRequest $request): JsonResponse
     {
@@ -157,6 +241,25 @@ class AuthController extends Controller
 
     /**
      * Logout user (revoke current token)
+     *
+     * @OA\Post(
+     *     path="/api/v1/auth/logout",
+     *     tags={"Authentication"},
+     *     summary="Logout and revoke current token",
+     *     description="Revoke the current authentication token",
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Logout successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Logout realizado com sucesso!")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function logout(Request $request): JsonResponse
     {
@@ -176,6 +279,34 @@ class AuthController extends Controller
 
     /**
      * Get authenticated user profile
+     *
+     * @OA\Get(
+     *     path="/api/v1/auth/me",
+     *     tags={"Authentication"},
+     *     summary="Get current user profile",
+     *     description="Retrieve the authenticated user's profile information",
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="User profile retrieved successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="João Silva"),
+     *                 @OA\Property(property="email", type="string", example="joao@example.com"),
+     *                 @OA\Property(property="phone", type="string", example="11999999999"),
+     *                 @OA\Property(property="user_type", type="string", example="passenger"),
+     *                 @OA\Property(property="wallet_balance", type="number", format="float", example=50.00),
+     *                 @OA\Property(property="level", type="integer", example=5),
+     *                 @OA\Property(property="total_xp", type="integer", example=1250)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
      */
     public function profile(Request $request): JsonResponse
     {

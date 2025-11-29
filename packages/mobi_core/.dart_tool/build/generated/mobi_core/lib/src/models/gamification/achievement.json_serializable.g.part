@@ -1,0 +1,69 @@
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+Achievement _$AchievementFromJson(Map<String, dynamic> json) => Achievement(
+      id: (json['id'] as num).toInt(),
+      name: json['name'] as String,
+      slug: json['slug'] as String,
+      description: json['description'] as String,
+      icon: json['icon'] as String,
+      type: $enumDecode(_$AchievementTypeEnumMap, json['type']),
+      targetValue: (json['target_value'] as num).toInt(),
+      targetMetric: json['target_metric'] as String,
+      xpReward: (json['xp_reward'] as num).toInt(),
+      moneyReward: (json['money_reward'] as num).toDouble(),
+      badge: json['badge'] as Map<String, dynamic>?,
+      isRepeatable: json['is_repeatable'] as bool? ?? false,
+      progress: json['progress'] == null
+          ? null
+          : AchievementProgress.fromJson(
+              json['progress'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$AchievementToJson(Achievement instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'name': instance.name,
+      'slug': instance.slug,
+      'description': instance.description,
+      'icon': instance.icon,
+      'type': _$AchievementTypeEnumMap[instance.type]!,
+      'target_value': instance.targetValue,
+      'target_metric': instance.targetMetric,
+      'xp_reward': instance.xpReward,
+      'money_reward': instance.moneyReward,
+      'badge': instance.badge,
+      'is_repeatable': instance.isRepeatable,
+      'progress': instance.progress,
+    };
+
+const _$AchievementTypeEnumMap = {
+  AchievementType.milestone: 'milestone',
+  AchievementType.progressive: 'progressive',
+  AchievementType.secret: 'secret',
+  AchievementType.challenge: 'challenge',
+};
+
+AchievementProgress _$AchievementProgressFromJson(Map<String, dynamic> json) =>
+    AchievementProgress(
+      current: (json['current'] as num).toInt(),
+      target: (json['target'] as num).toInt(),
+      percentage: (json['percentage'] as num).toDouble(),
+      isCompleted: json['is_completed'] as bool,
+      completedAt: json['completed_at'] == null
+          ? null
+          : DateTime.parse(json['completed_at'] as String),
+      timesCompleted: (json['times_completed'] as num?)?.toInt() ?? 0,
+    );
+
+Map<String, dynamic> _$AchievementProgressToJson(
+        AchievementProgress instance) =>
+    <String, dynamic>{
+      'current': instance.current,
+      'target': instance.target,
+      'percentage': instance.percentage,
+      'is_completed': instance.isCompleted,
+      'completed_at': instance.completedAt?.toIso8601String(),
+      'times_completed': instance.timesCompleted,
+    };
