@@ -19,7 +19,11 @@ class EmergencyContactController extends Controller
             ->orderBy('created_at', 'asc')
             ->get();
 
-        return response()->json(['data' => $contacts]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Emergency contacts retrieved successfully',
+            'data' => $contacts
+        ]);
     }
 
     /**
@@ -36,6 +40,7 @@ class EmergencyContactController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
+                'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
@@ -53,7 +58,11 @@ class EmergencyContactController extends Controller
             $contact->setAsPrimary();
         }
 
-        return response()->json(['data' => $contact], 201);
+        return response()->json([
+            'success' => true,
+            'message' => 'Emergency contact created successfully',
+            'data' => $contact
+        ], 201);
     }
 
     /**
@@ -62,7 +71,10 @@ class EmergencyContactController extends Controller
     public function update(Request $request, EmergencyContact $contact): JsonResponse
     {
         if ($contact->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -74,6 +86,7 @@ class EmergencyContactController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
+                'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
@@ -85,7 +98,11 @@ class EmergencyContactController extends Controller
             $contact->setAsPrimary();
         }
 
-        return response()->json(['data' => $contact->fresh()]);
+        return response()->json([
+            'success' => true,
+            'message' => 'Emergency contact updated successfully',
+            'data' => $contact->fresh()
+        ]);
     }
 
     /**
@@ -94,11 +111,17 @@ class EmergencyContactController extends Controller
     public function destroy(Request $request, EmergencyContact $contact): JsonResponse
     {
         if ($contact->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 403);
         }
 
         $contact->delete();
 
-        return response()->json(['message' => 'Emergency contact deleted']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Emergency contact deleted successfully'
+        ]);
     }
 }

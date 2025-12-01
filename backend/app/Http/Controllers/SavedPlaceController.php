@@ -21,6 +21,8 @@ class SavedPlaceController extends Controller
             ->get();
 
         return response()->json([
+            'success' => true,
+            'message' => 'Saved places retrieved successfully',
             'data' => $places
         ]);
     }
@@ -41,6 +43,7 @@ class SavedPlaceController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
+                'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
@@ -61,6 +64,8 @@ class SavedPlaceController extends Controller
         }
 
         return response()->json([
+            'success' => true,
+            'message' => 'Saved place created successfully',
             'data' => $place
         ], 201);
     }
@@ -73,11 +78,14 @@ class SavedPlaceController extends Controller
         // Verify ownership
         if ($savedPlace->user_id !== $request->user()->id) {
             return response()->json([
+                'success' => false,
                 'message' => 'Unauthorized'
             ], 403);
         }
 
         return response()->json([
+            'success' => true,
+            'message' => 'Saved place retrieved successfully',
             'data' => $savedPlace
         ]);
     }
@@ -90,6 +98,7 @@ class SavedPlaceController extends Controller
         // Verify ownership
         if ($savedPlace->user_id !== $request->user()->id) {
             return response()->json([
+                'success' => false,
                 'message' => 'Unauthorized'
             ], 403);
         }
@@ -105,6 +114,7 @@ class SavedPlaceController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
+                'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
@@ -124,6 +134,8 @@ class SavedPlaceController extends Controller
         }
 
         return response()->json([
+            'success' => true,
+            'message' => 'Saved place updated successfully',
             'data' => $savedPlace->fresh()
         ]);
     }
@@ -136,6 +148,7 @@ class SavedPlaceController extends Controller
         // Verify ownership
         if ($savedPlace->user_id !== $request->user()->id) {
             return response()->json([
+                'success' => false,
                 'message' => 'Unauthorized'
             ], 403);
         }
@@ -143,6 +156,7 @@ class SavedPlaceController extends Controller
         $savedPlace->delete();
 
         return response()->json([
+            'success' => true,
             'message' => 'Saved place deleted successfully'
         ]);
     }
@@ -155,6 +169,7 @@ class SavedPlaceController extends Controller
         // Verify ownership
         if ($savedPlace->user_id !== $request->user()->id) {
             return response()->json([
+                'success' => false,
                 'message' => 'Unauthorized'
             ], 403);
         }
@@ -162,6 +177,8 @@ class SavedPlaceController extends Controller
         $savedPlace->setAsDefault();
 
         return response()->json([
+            'success' => true,
+            'message' => 'Default place updated successfully',
             'data' => $savedPlace->fresh()
         ]);
     }
@@ -173,6 +190,7 @@ class SavedPlaceController extends Controller
     {
         if (!in_array($type, ['home', 'work', 'favorite'])) {
             return response()->json([
+                'success' => false,
                 'message' => 'Invalid type'
             ], 400);
         }
@@ -184,6 +202,8 @@ class SavedPlaceController extends Controller
             ->get();
 
         return response()->json([
+            'success' => true,
+            'message' => 'Saved places retrieved successfully',
             'data' => $places
         ]);
     }
