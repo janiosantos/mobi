@@ -46,76 +46,18 @@ class GamificationController extends Controller
 
         return response()->json([
             'success' => true,
+            'message' => 'Gamification profile retrieved successfully',
             'data' => [
+                'level' => $stats->level,
+                'current_xp' => $stats->current_xp,
+                'total_xp' => $stats->total_xp,
+                'current_streak' => $stats->current_streak,
+                'longest_streak' => $stats->longest_streak,
                 'stats' => [
-                    'level' => $stats->level,
-                    'current_xp' => $stats->current_xp,
-                    'total_xp' => $stats->total_xp,
-                    'xp_to_next_level' => $stats->xp_to_next_level,
-                    'progress_percentage' => $stats->xp_to_next_level > 0
-                        ? round(($stats->current_xp / $stats->xp_to_next_level) * 100, 2)
-                        : 0,
-                ],
-                'rides' => [
-                    'total' => $stats->total_rides,
-                    'completed' => $stats->completed_rides,
-                    'cancelled' => $stats->cancelled_rides,
-                    'completion_rate' => $stats->completion_rate,
-                ],
-                'earnings' => [
-                    'total' => (float) $stats->total_earnings,
-                ],
-                'ratings' => [
-                    'average' => (float) $stats->average_rating,
-                    'total' => $stats->total_ratings,
-                ],
-                'streak' => [
-                    'current' => $stats->current_streak,
-                    'longest' => $stats->longest_streak,
-                    'last_ride_date' => $stats->last_ride_date?->format('Y-m-d'),
-                ],
-                'badges' => [
-                    'total' => $badges->count(),
-                    'by_rarity' => $badges->groupBy('rarity')->map->count(),
-                    'earned' => $badges->map(function ($badge) {
-                        return [
-                            'id' => $badge->id,
-                            'name' => $badge->name,
-                            'description' => $badge->description,
-                            'icon' => $badge->icon,
-                            'category' => $badge->category,
-                            'rarity' => $badge->rarity,
-                            'points' => $badge->points,
-                            'earned_at' => $badge->pivot->earned_at,
-                        ];
-                    }),
-                ],
-                'achievements' => [
-                    'completed' => $achievements->map(function ($ua) {
-                        return [
-                            'id' => $ua->achievement->id,
-                            'name' => $ua->achievement->name,
-                            'description' => $ua->achievement->description,
-                            'icon' => $ua->achievement->icon,
-                            'type' => $ua->achievement->type,
-                            'xp_reward' => $ua->achievement->xp_reward,
-                            'money_reward' => (float) $ua->achievement->money_reward,
-                            'completed_at' => $ua->completed_at,
-                            'times_completed' => $ua->times_completed,
-                        ];
-                    }),
-                    'in_progress' => $inProgress->map(function ($ua) {
-                        return [
-                            'id' => $ua->achievement->id,
-                            'name' => $ua->achievement->name,
-                            'description' => $ua->achievement->description,
-                            'icon' => $ua->achievement->icon,
-                            'type' => $ua->achievement->type,
-                            'current_progress' => $ua->current_progress,
-                            'target_progress' => $ua->target_progress,
-                            'progress_percentage' => $ua->progress_percentage,
-                        ];
-                    }),
+                    'total_rides' => $stats->total_rides,
+                    'completed_rides' => $stats->completed_rides,
+                    'average_rating' => (float) $stats->average_rating,
+                    'total_earnings' => (float) $stats->total_earnings,
                 ],
             ],
         ]);
@@ -128,28 +70,27 @@ class GamificationController extends Controller
     {
         $user = $request->user();
 
-        $badges = Badge::active()
+        // Get user's earned badges
+        $badges = $user->badges()
+            ->withPivot('earned_at')
             ->get()
-            ->map(function ($badge) use ($user) {
+            ->map(function ($badge) {
                 return [
                     'id' => $badge->id,
                     'name' => $badge->name,
-                    'slug' => $badge->slug,
                     'description' => $badge->description,
                     'icon' => $badge->icon,
                     'category' => $badge->category,
                     'rarity' => $badge->rarity,
                     'points' => $badge->points,
-                    'is_earned' => $badge->isEarnedBy($user),
-                    'earned_at' => $badge->isEarnedBy($user)
-                        ? $badge->users()->where('user_id', $user->id)->first()?->pivot?->earned_at
-                        : null,
+                    'earned_at' => $badge->pivot->earned_at,
                 ];
             });
 
         return response()->json([
             'success' => true,
-            'data' => $badges->groupBy('category'),
+            'message' => 'Badges retrieved successfully',
+            'data' => $badges->values(),
         ]);
     }
 
@@ -161,7 +102,6 @@ class GamificationController extends Controller
         $user = $request->user();
 
         $achievements = Achievement::active()
-            ->with('badge')
             ->get()
             ->map(function ($achievement) use ($user) {
                 $userAchievement = $user->achievements()
@@ -171,41 +111,20 @@ class GamificationController extends Controller
                 return [
                     'id' => $achievement->id,
                     'name' => $achievement->name,
-                    'slug' => $achievement->slug,
                     'description' => $achievement->description,
-                    'icon' => $achievement->icon,
+                    'icon' => $achievement->icon ?? '🏆',
                     'type' => $achievement->type,
                     'target_value' => $achievement->target_value,
-                    'target_metric' => $achievement->target_metric,
                     'xp_reward' => $achievement->xp_reward,
-                    'money_reward' => (float) $achievement->money_reward,
-                    'badge' => $achievement->badge ? [
-                        'name' => $achievement->badge->name,
-                        'icon' => $achievement->badge->icon,
-                        'rarity' => $achievement->badge->rarity,
-                    ] : null,
-                    'is_repeatable' => $achievement->is_repeatable,
-                    'progress' => $userAchievement ? [
-                        'current' => $userAchievement->current_progress,
-                        'target' => $userAchievement->target_progress,
-                        'percentage' => $userAchievement->progress_percentage,
-                        'is_completed' => $userAchievement->is_completed,
-                        'completed_at' => $userAchievement->completed_at,
-                        'times_completed' => $userAchievement->times_completed,
-                    ] : [
-                        'current' => 0,
-                        'target' => $achievement->target_value,
-                        'percentage' => 0,
-                        'is_completed' => false,
-                        'completed_at' => null,
-                        'times_completed' => 0,
-                    ],
+                    'current_progress' => $userAchievement ? $userAchievement->current_progress : 0,
+                    'completed_at' => $userAchievement ? $userAchievement->completed_at : null,
                 ];
             });
 
         return response()->json([
             'success' => true,
-            'data' => $achievements->groupBy('type'),
+            'message' => 'Achievements retrieved successfully',
+            'data' => $achievements->values(),
         ]);
     }
 
@@ -214,16 +133,18 @@ class GamificationController extends Controller
      */
     public function leaderboard(Request $request): JsonResponse
     {
-        $type = $request->input('type', 'weekly'); // weekly, monthly, all_time
-        $category = $request->input('category', 'rides'); // rides, earnings, ratings, xp
+        $period = $request->input('period', 'all_time'); // weekly, monthly, all_time
         $limit = min($request->input('limit', 50), 100);
+        $currentUser = $request->user();
 
+        // For now, we'll use total_xp for ranking regardless of period
+        // TODO: Implement period-specific filtering (weekly/monthly)
         $query = UserStats::query()
             ->with('user:id,name,email,photo_url')
-            ->orderByDesc($this->getOrderColumn($category))
+            ->orderByDesc('total_xp')
             ->limit($limit);
 
-        $leaderboard = $query->get()->map(function ($stats, $index) use ($category) {
+        $leaderboard = $query->get()->map(function ($stats, $index) use ($currentUser) {
             return [
                 'rank' => $index + 1,
                 'user' => [
@@ -231,34 +152,15 @@ class GamificationController extends Controller
                     'name' => $stats->user->name,
                     'photo_url' => $stats->user->photo_url,
                 ],
-                'score' => $this->getScore($stats, $category),
-                'stats' => [
-                    'level' => $stats->level,
-                    'total_rides' => $stats->total_rides,
-                    'total_earnings' => (float) $stats->total_earnings,
-                    'average_rating' => (float) $stats->average_rating,
-                    'total_xp' => $stats->total_xp,
-                ],
+                'score' => $stats->total_xp,
+                'is_current_user' => $stats->user->id === $currentUser->id,
             ];
-        });
-
-        // Get current user's rank
-        $user = $request->user();
-        $userRank = $leaderboard->search(function ($item) use ($user) {
-            return $item['user']['id'] === $user->id;
         });
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'type' => $type,
-                'category' => $category,
-                'leaderboard' => $leaderboard,
-                'current_user' => [
-                    'rank' => $userRank !== false ? $userRank + 1 : null,
-                    'score' => $this->getScore($user->stats, $category),
-                ],
-            ],
+            'message' => 'Leaderboard retrieved successfully',
+            'data' => $leaderboard->values(),
         ]);
     }
 
@@ -338,31 +240,4 @@ class GamificationController extends Controller
         ]);
     }
 
-    /**
-     * Get order column for leaderboard
-     */
-    protected function getOrderColumn(string $category): string
-    {
-        return match ($category) {
-            'rides' => 'completed_rides',
-            'earnings' => 'total_earnings',
-            'ratings' => 'average_rating',
-            'xp' => 'total_xp',
-            default => 'total_xp',
-        };
-    }
-
-    /**
-     * Get score value for leaderboard
-     */
-    protected function getScore(UserStats $stats, string $category): float
-    {
-        return match ($category) {
-            'rides' => $stats->completed_rides,
-            'earnings' => (float) $stats->total_earnings,
-            'ratings' => (float) $stats->average_rating,
-            'xp' => $stats->total_xp,
-            default => $stats->total_xp,
-        };
-    }
 }
