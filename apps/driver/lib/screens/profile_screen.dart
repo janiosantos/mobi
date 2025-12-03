@@ -19,11 +19,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _imagePicker = ImagePicker();
   File? _selectedImage;
   bool _isLoading = false;
+  bool _isLoadingDriverData = true;
+
+  // Driver profile data
+  double _totalEarnings = 0.0;
+  int _totalOnlineHours = 0;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadDriverProfile();
   }
 
   void _loadUserData() {
@@ -33,6 +39,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _nameController.text = user.name;
       _emailController.text = user.email;
       _phoneController.text = user.phone ?? '';
+    }
+  }
+
+  Future<void> _loadDriverProfile() async {
+    try {
+      final apiService = getIt<ApiService>();
+      final response = await apiService.getDriverProfile();
+
+      if (response.response.statusCode == 200) {
+        final data = response.data['data'];
+        setState(() {
+          _totalEarnings = (data['total_earnings'] ?? 0).toDouble();
+          _totalOnlineHours = data['total_online_hours'] ?? 0;
+          _isLoadingDriverData = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingDriverData = false;
+      });
     }
   }
 
@@ -61,16 +87,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Call profile update API
-      await Future.delayed(const Duration(seconds: 1));
+      final apiService = getIt<ApiService>();
 
-      if (mounted) {
-        CustomSnackbar.showSuccess(context, 'Perfil atualizado com sucesso!');
-        Navigator.pop(context);
+      // Prepare update data
+      final updateData = {
+        'name': _nameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+      };
+
+      // Call profile update API
+      final response = await apiService.updateProfile(updateData);
+
+      if (response.response.statusCode == 200) {
+        // Update AuthBloc with new user data
+        final authBloc = context.read<AuthBloc>();
+        final updatedUser = User.fromJson(response.data['data']);
+        authBloc.add(UpdateUserProfile(updatedUser));
+
+        if (mounted) {
+          CustomSnackbar.showSuccess(context, 'Perfil atualizado com sucesso!');
+        }
+      } else {
+        throw Exception('Failed to update profile');
       }
     } catch (e) {
       if (mounted) {
-        CustomSnackbar.showError(context, 'Erro ao atualizar perfil');
+        CustomSnackbar.showError(
+          context,
+          'Erro ao atualizar perfil: ${e.toString()}',
+        );
       }
     } finally {
       if (mounted) {
@@ -241,12 +286,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           _StatRow(
                             icon: Icons.attach_money,
                             label: 'Ganhos totais',
-                            value: 'R\$ 0,00', // TODO: Get from driver profile
+                            value: _isLoadingDriverData
+                                ? '...'
+                                : 'R\$ ${_totalEarnings.toStringAsFixed(2)}',
                           ),
                           _StatRow(
                             icon: Icons.access_time,
                             label: 'Horas online',
-                            value: '0h', // TODO: Get from driver profile
+                            value: _isLoadingDriverData
+                                ? '...'
+                                : '${_totalOnlineHours}h',
                           ),
                         ],
                       ),
@@ -317,7 +366,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showDeleteAccountDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Excluir Conta'),
         content: const Text(
           'Tem certeza que deseja excluir permanentemente sua conta? '
@@ -325,17 +374,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement account deletion
-              CustomSnackbar.showError(
-                context,
-                'Entre em contato com o suporte para excluir sua conta',
-              );
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await _deleteAccount();
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Excluir'),
@@ -343,6 +388,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _deleteAccount() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final apiService = getIt<ApiService>();
+      final response = await apiService.delete('/auth/account');
+
+      if (response.response.statusCode == 200) {
+        if (mounted) {
+          CustomSnackbar.showSuccess(
+            context,
+            'Conta excluída com sucesso',
+          );
+
+          // Logout and navigate to login
+          final authBloc = context.read<AuthBloc>();
+          authBloc.add(LogoutRequested());
+
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/login',
+            (route) => false,
+          );
+        }
+      } else {
+        throw Exception('Failed to delete account');
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackbar.showError(
+          context,
+          'Erro ao excluir conta: ${e.toString()}',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
