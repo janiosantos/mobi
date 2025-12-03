@@ -9,53 +9,76 @@ class VehiclesScreen extends StatefulWidget {
 }
 
 class _VehiclesScreenState extends State<VehiclesScreen> {
-  bool _isLoading = false;
+  final ApiService _apiService = getIt<ApiService>();
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _vehicles = [];
+  List<Map<String, dynamic>> _categories = [];
 
-  // TODO: Load from API
-  final List<Map<String, dynamic>> _vehicles = [
-    {
-      'id': 1,
-      'make': 'Toyota',
-      'model': 'Corolla',
-      'year': 2022,
-      'color': 'Prata',
-      'plate': 'ABC-1234',
-      'category': 'Conforto',
-      'isActive': true,
-    },
-    {
-      'id': 2,
-      'make': 'Honda',
-      'model': 'Civic',
-      'year': 2021,
-      'color': 'Preto',
-      'plate': 'XYZ-9876',
-      'category': 'Econômico',
-      'isActive': false,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
-  Future<void> _activateVehicle(int vehicleId) async {
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Call API to activate vehicle
-      await Future.delayed(const Duration(seconds: 1));
+      // Load vehicles and categories in parallel
+      final results = await Future.wait([
+        _apiService.getVehicles(),
+        _apiService.getVehicleCategories(),
+      ]);
+
+      final vehiclesResponse = results[0];
+      final categoriesResponse = results[1];
 
       setState(() {
-        for (var vehicle in _vehicles) {
-          vehicle['isActive'] = vehicle['id'] == vehicleId;
+        if (vehiclesResponse.response.statusCode == 200) {
+          _vehicles = List<Map<String, dynamic>>.from(
+            vehiclesResponse.data['data'] ?? [],
+          );
         }
+
+        if (categoriesResponse.response.statusCode == 200) {
+          _categories = List<Map<String, dynamic>>.from(
+            categoriesResponse.data['data'] ?? [],
+          );
+        }
+
         _isLoading = false;
       });
-
+    } catch (e) {
+      setState(() => _isLoading = false);
       if (mounted) {
-        CustomSnackbar.showSuccess(context, 'Veículo ativado com sucesso!');
+        CustomSnackbar.showError(
+          context,
+          'Erro ao carregar veículos: ${e.toString()}',
+        );
+      }
+    }
+  }
+
+  Future<void> _activateVehicle(int vehicleId) async {
+    try {
+      final response = await _apiService.activateVehicle(vehicleId);
+
+      if (response.response.statusCode == 200) {
+        // Reload to get updated list
+        await _loadData();
+
+        if (mounted) {
+          CustomSnackbar.showSuccess(context, 'Veículo ativado com sucesso!');
+        }
+      } else {
+        throw Exception('Failed to activate vehicle');
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
-        CustomSnackbar.showError(context, 'Erro ao ativar veículo');
+        CustomSnackbar.showError(
+          context,
+          'Erro ao ativar veículo: ${e.toString()}',
+        );
       }
     }
   }
@@ -84,118 +107,207 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
     );
 
     if (confirmed == true) {
-      setState(() => _isLoading = true);
-
       try {
-        // TODO: Call API to delete vehicle
-        await Future.delayed(const Duration(seconds: 1));
+        await _apiService.deleteVehicle(vehicleId);
 
-        setState(() {
-          _vehicles.removeWhere((v) => v['id'] == vehicleId);
-          _isLoading = false;
-        });
+        // Reload to get updated list
+        await _loadData();
 
         if (mounted) {
           CustomSnackbar.showSuccess(context, 'Veículo removido com sucesso!');
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
-          CustomSnackbar.showError(context, 'Erro ao remover veículo');
+          CustomSnackbar.showError(
+            context,
+            'Erro ao remover veículo: ${e.toString()}',
+          );
         }
       }
     }
   }
 
   void _showAddVehicleDialog() {
+    final formKey = GlobalKey<FormState>();
     final makeController = TextEditingController();
     final modelController = TextEditingController();
     final yearController = TextEditingController();
     final colorController = TextEditingController();
     final plateController = TextEditingController();
-    String selectedCategory = 'Econômico';
+    int? selectedCategoryId;
+
+    if (_categories.isEmpty) {
+      CustomSnackbar.showError(
+        context,
+        'Carregue as categorias primeiro',
+      );
+      return;
+    }
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Adicionar Veículo'),
         content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: makeController,
-                decoration: const InputDecoration(
-                  labelText: 'Marca',
-                  hintText: 'Ex: Toyota',
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: makeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Marca',
+                    hintText: 'Ex: Toyota',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Marca é obrigatória';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: modelController,
-                decoration: const InputDecoration(
-                  labelText: 'Modelo',
-                  hintText: 'Ex: Corolla',
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: modelController,
+                  decoration: const InputDecoration(
+                    labelText: 'Modelo',
+                    hintText: 'Ex: Corolla',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Modelo é obrigatório';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: yearController,
-                decoration: const InputDecoration(
-                  labelText: 'Ano',
-                  hintText: 'Ex: 2022',
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: yearController,
+                  decoration: const InputDecoration(
+                    labelText: 'Ano',
+                    hintText: 'Ex: 2022',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Ano é obrigatório';
+                    }
+                    final year = int.tryParse(value);
+                    if (year == null || year < 1900 || year > DateTime.now().year + 1) {
+                      return 'Ano inválido';
+                    }
+                    return null;
+                  },
                 ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: colorController,
-                decoration: const InputDecoration(
-                  labelText: 'Cor',
-                  hintText: 'Ex: Prata',
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: colorController,
+                  decoration: const InputDecoration(
+                    labelText: 'Cor',
+                    hintText: 'Ex: Prata',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Cor é obrigatória';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: plateController,
-                decoration: const InputDecoration(
-                  labelText: 'Placa',
-                  hintText: 'Ex: ABC-1234',
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: plateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Placa',
+                    hintText: 'Ex: ABC-1234 ou ABC1D23',
+                    border: OutlineInputBorder(),
+                  ),
+                  textCapitalization: TextCapitalization.characters,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Placa é obrigatória';
+                    }
+                    final cleaned = value.replaceAll(RegExp(r'[^A-Z0-9]'), '');
+                    if (cleaned.length != 7) {
+                      return 'Placa inválida (7 caracteres)';
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: selectedCategory,
-                decoration: const InputDecoration(
-                  labelText: 'Categoria',
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  decoration: const InputDecoration(
+                    labelText: 'Categoria',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _categories.map((category) {
+                    return DropdownMenuItem<int>(
+                      value: category['id'],
+                      child: Text(category['name'] ?? 'Desconhecido'),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    selectedCategoryId = value;
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Categoria é obrigatória';
+                    }
+                    return null;
+                  },
                 ),
-                items: const [
-                  DropdownMenuItem(
-                      value: 'Econômico', child: Text('Econômico')),
-                  DropdownMenuItem(value: 'Conforto', child: Text('Conforto')),
-                  DropdownMenuItem(value: 'Premium', child: Text('Premium')),
-                  DropdownMenuItem(value: 'XL', child: Text('XL')),
-                ],
-                onChanged: (value) {
-                  if (value != null) selectedCategory = value;
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancelar'),
           ),
           TextButton(
             onPressed: () async {
-              // TODO: Validate and call API
-              Navigator.pop(context);
-              CustomSnackbar.showSuccess(
-                this.context,
-                'Veículo adicionado! Aguarde aprovação.',
-              );
+              if (!formKey.currentState!.validate()) return;
+
+              Navigator.pop(dialogContext);
+
+              try {
+                final vehicleData = {
+                  'make': makeController.text.trim(),
+                  'model': modelController.text.trim(),
+                  'year': int.parse(yearController.text.trim()),
+                  'color': colorController.text.trim(),
+                  'license_plate': plateController.text.trim().toUpperCase(),
+                  'vehicle_category_id': selectedCategoryId,
+                };
+
+                final response = await _apiService.createVehicle(vehicleData);
+
+                if (response.response.statusCode == 201 ||
+                    response.response.statusCode == 200) {
+                  await _loadData();
+
+                  if (mounted) {
+                    CustomSnackbar.showSuccess(
+                      context,
+                      'Veículo adicionado! Aguarde aprovação.',
+                    );
+                  }
+                } else {
+                  throw Exception('Failed to create vehicle');
+                }
+              } catch (e) {
+                if (mounted) {
+                  CustomSnackbar.showError(
+                    context,
+                    'Erro ao adicionar veículo: ${e.toString()}',
+                  );
+                }
+              }
             },
             child: const Text('Adicionar'),
           ),
@@ -210,6 +322,11 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
       appBar: AppBar(
         title: const Text('Meus Veículos'),
         actions: [
+          if (!_isLoading)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadData,
+            ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: _showAddVehicleDialog,
@@ -218,39 +335,71 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _vehicles.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.directions_car, size: 64, color: Colors.grey),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Nenhum veículo cadastrado',
-                        style: TextStyle(fontSize: 18, color: Colors.grey),
+          : RefreshIndicator(
+              onRefresh: _loadData,
+              child: _vehicles.isEmpty
+                  ? Center(
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Container(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.directions_car,
+                                size: 80,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 24),
+                              Text(
+                                'Nenhum veículo cadastrado',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Adicione um veículo para começar\na aceitar corridas',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              ElevatedButton.icon(
+                                onPressed: _showAddVehicleDialog,
+                                icon: const Icon(Icons.add),
+                                label: const Text('Adicionar Veículo'),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 32,
+                                    vertical: 16,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        onPressed: _showAddVehicleDialog,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Adicionar Veículo'),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _vehicles.length,
-                  itemBuilder: (context, index) {
-                    final vehicle = _vehicles[index];
-                    return _VehicleCard(
-                      vehicle: vehicle,
-                      onActivate: () => _activateVehicle(vehicle['id']),
-                      onDelete: () => _deleteVehicle(vehicle['id']),
-                    );
-                  },
-                ),
-      floatingActionButton: _vehicles.isNotEmpty
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _vehicles.length,
+                      itemBuilder: (context, index) {
+                        final vehicle = _vehicles[index];
+                        return _VehicleCard(
+                          vehicle: vehicle,
+                          onActivate: () => _activateVehicle(vehicle['id']),
+                          onDelete: () => _deleteVehicle(vehicle['id']),
+                        );
+                      },
+                    ),
+            ),
+      floatingActionButton: !_isLoading && _vehicles.isNotEmpty
           ? FloatingActionButton(
               onPressed: _showAddVehicleDialog,
               child: const Icon(Icons.add),
@@ -273,7 +422,15 @@ class _VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isActive = vehicle['isActive'] as bool;
+    final isActive = vehicle['is_active'] == true || vehicle['isActive'] == true;
+    final make = vehicle['make'] ?? '';
+    final model = vehicle['model'] ?? '';
+    final year = vehicle['year'] ?? '';
+    final color = vehicle['color'] ?? '';
+    final plate =
+        vehicle['license_plate'] ?? vehicle['plate'] ?? '';
+    final categoryName =
+        vehicle['category']?['name'] ?? vehicle['category'] ?? 'N/A';
 
     return Card(
       elevation: isActive ? 4 : 1,
@@ -285,12 +442,21 @@ class _VehicleCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.directions_car,
-                  size: 48,
-                  color: isActive
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.grey,
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: (isActive
+                            ? AppConstants.primaryColor
+                            : Colors.grey)
+                        .withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.directions_car,
+                    size: 32,
+                    color: isActive ? AppConstants.primaryColor : Colors.grey,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -298,25 +464,60 @@ class _VehicleCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${vehicle['make']} ${vehicle['model']}',
+                        '$make $model',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${vehicle['year']} • ${vehicle['color']} • ${vehicle['plate']}',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        '$year • $color',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey.shade600,
+                            ),
                       ),
-                      const SizedBox(height: 4),
-                      Chip(
-                        label: Text(vehicle['category']),
-                        backgroundColor: Theme.of(context)
-                            .colorScheme
-                            .primaryContainer,
-                        labelStyle: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.blue.shade200),
+                            ),
+                            child: Text(
+                              plate,
+                              style: TextStyle(
+                                color: Colors.blue.shade900,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppConstants.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              categoryName,
+                              style: TextStyle(
+                                color: AppConstants.primaryColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -324,28 +525,57 @@ class _VehicleCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
             Row(
               children: [
                 if (isActive)
-                  const Chip(
-                    label: Text('ATIVO'),
-                    backgroundColor: Colors.green,
-                    labelStyle: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppConstants.successColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'ATIVO',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 else
                   OutlinedButton.icon(
                     onPressed: onActivate,
-                    icon: const Icon(Icons.check_circle_outline),
+                    icon: const Icon(Icons.check_circle_outline, size: 18),
                     label: const Text('Ativar'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                    ),
                   ),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
                   color: Colors.red,
                   onPressed: onDelete,
+                  tooltip: 'Remover veículo',
                 ),
               ],
             ),
