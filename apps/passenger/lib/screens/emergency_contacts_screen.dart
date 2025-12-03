@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobi_core/mobi_core.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/service_locator.dart';
 
 class EmergencyContactsScreen extends StatefulWidget {
@@ -112,9 +113,21 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     );
   }
 
-  void _callContact(String phone) {
-    // TODO: Implement phone call using url_launcher
-    CustomSnackbar.showSuccess(context, 'Ligando para $phone...');
+  Future<void> _callContact(String phone) async {
+    try {
+      final Uri phoneUri = Uri(scheme: 'tel', path: phone);
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+      } else {
+        if (mounted) {
+          CustomSnackbar.showError(context, 'Não foi possível realizar a chamada');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackbar.showError(context, 'Erro ao iniciar chamada: ${e.toString()}');
+      }
+    }
   }
 
   @override
