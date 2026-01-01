@@ -93,7 +93,7 @@ jobs:
         run: flutter test --coverage --reporter expanded
 
       - name: 📊 Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: packages/mobi_core/coverage/lcov.info
           flags: mobi_core
@@ -190,7 +190,7 @@ jobs:
           fi
 
       - name: 📊 Upload backend coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: backend/coverage.xml
           flags: backend
