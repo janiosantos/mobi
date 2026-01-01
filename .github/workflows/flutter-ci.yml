@@ -101,7 +101,7 @@ jobs:
         working-directory: ./packages/mobi_core
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: ./packages/mobi_core/coverage/lcov.info
           flags: mobi_core

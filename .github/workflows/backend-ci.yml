@@ -104,7 +104,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         if: matrix.php-version == '8.3'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: ./backend/coverage.xml
           flags: backend

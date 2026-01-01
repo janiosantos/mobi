@@ -58,7 +58,7 @@ jobs:
           genhtml coverage/lcov.info -o coverage/html
 
       - name: 📈 Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: packages/mobi_core/coverage/lcov.info
           flags: mobi_core
@@ -279,7 +279,7 @@ jobs:
           fi
 
       - name: 📈 Upload backend coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: backend/coverage.xml
           flags: backend
